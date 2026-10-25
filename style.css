@@ -264,3 +264,5 @@ a.link-card:hover{border-color:var(--gold)}
 @media (max-width:720px){.card.profile{grid-template-columns:1fr}.profile .photo{width:140px}}
 .profile h3.name{font-family:var(--font-body);font-weight:700}
 img.photo{display:block;height:auto;object-fit:cover;border:0}
+.feature p{margin:8px 0 0;color:var(--muted);font-size:15px}
+.feature img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:4px;margin-bottom:14px}
