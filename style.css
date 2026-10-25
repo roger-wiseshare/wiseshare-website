@@ -266,3 +266,7 @@ a.link-card:hover{border-color:var(--gold)}
 img.photo{display:block;height:auto;object-fit:cover;border:0}
 .feature p{margin:8px 0 0;color:var(--muted);font-size:15px}
 .feature img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:4px;margin-bottom:14px}
+/* 顧問經歷中的外部連結：放大 1.2 倍、藍色，方便辨認 */
+.profile ul a{font-size:1.2em;color:#1a5fb4;text-underline-offset:3px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .profile ul a{color:#6cb4ff}}
+:root[data-theme="dark"] .profile ul a{color:#6cb4ff}
