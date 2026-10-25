@@ -44,7 +44,7 @@ p{margin:0}
 header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
 header.site .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:12px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none}
-.brand .logo{display:block;height:44px;width:auto}
+.brand .logo{display:block;height:38px;width:auto}
 /* 深色模式改用橘色字的 Logo */
 .brand .logo-dark{display:none}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand .logo-light{display:none}:root:not([data-theme="light"]) .brand .logo-dark{display:block}}
@@ -256,7 +256,7 @@ a.link-card:hover{border-color:var(--gold)}
 /* 顧問團隊：一位顧問一張橫向卡片 */
 .card.profile{display:grid;grid-template-columns:200px minmax(0,1fr);gap:28px;align-items:start}
 .profile .photo{width:200px}
-.profile h3 small{display:block;font-family:var(--font-body);font-size:15px;color:var(--gold);font-weight:700;margin-top:4px}
+.profile h3 small{display:block;font-family:var(--font-body);font-size:18px;color:var(--gold);font-weight:700;margin-top:4px}
 .profile h4{font-size:15px;color:var(--muted);margin:18px 0 6px}
 .profile ul{margin:0;padding-left:1.2em;line-height:1.8}
 .profile ul.tags{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px}
