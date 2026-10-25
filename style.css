@@ -45,6 +45,11 @@ header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;backgroun
 header.site .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:12px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none}
 .brand .logo{display:block;height:44px;width:auto}
+/* 深色模式改用橘色字的 Logo */
+.brand .logo-dark{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand .logo-light{display:none}:root:not([data-theme="light"]) .brand .logo-dark{display:block}}
+:root[data-theme="dark"] .brand .logo-light{display:none}
+:root[data-theme="dark"] .brand .logo-dark{display:block}
 nav.main{display:flex;gap:4px;flex-wrap:wrap}
 nav.main>a,nav.main .dd>a{display:block;padding:6px 12px;text-decoration:none;border-radius:4px;font-weight:500}
 nav.main a:hover,nav.main a:focus-visible{background:var(--surface)}
