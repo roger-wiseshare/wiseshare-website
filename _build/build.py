@@ -56,7 +56,7 @@ def header(current):
     items.append(f'    <a class="nav-cta" href="contact.html"{cta_cur}>預約免費診斷</a>')
     nav = '\n'.join(items)
     return f'''<header class="site"><div class="wrap">
-  <a class="brand" href="index.html" aria-label="回首頁"><span class="logo-slot">Logo<br>待提供</span><b>智享數位資通</b></a>
+  <a class="brand" href="index.html" aria-label="回首頁"><img class="logo" src="images/logo-horizontal.png" width="506" height="120" alt="智享數位資通 Consulting&amp;Technology"></a>
   <nav class="main" aria-label="主選單">
 {nav}
   </nav>
@@ -85,6 +85,8 @@ def page(name):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" href="images/favicon.png">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 {script}</head>
 <body>
 {header(current)}
