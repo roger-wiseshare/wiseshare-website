@@ -262,3 +262,4 @@ a.link-card:hover{border-color:var(--gold)}
 .profile ul.tags{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px}
 .profile ul.tags li{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 12px;font-size:14px}
 @media (max-width:720px){.card.profile{grid-template-columns:1fr}.profile .photo{width:140px}}
+.profile h3 .en{font-family:var(--font-body);font-size:16px;font-weight:500;color:var(--muted);margin-left:6px}

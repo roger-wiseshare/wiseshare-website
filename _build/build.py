@@ -65,7 +65,7 @@ def header(current):
 
 FOOTER = '''<footer class="site"><div class="wrap">
   <div><div class="slogan">陪企業把轉型做出成果</div><div>© 智享數位資通｜rogerwang@wiseshare.com.tw</div></div>
-  <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end"><a href="checkup.html">3 分鐘企業健檢</a><a href="privacy.html">隱私權聲明</a><span>Facebook／LinkedIn <span class="todo">【有就放】</span></span></div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end"><a href="checkup.html">3 分鐘企業健檢</a><a href="privacy.html">隱私權聲明</a></div>
 </div></footer>'''
 
 
