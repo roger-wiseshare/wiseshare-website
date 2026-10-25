@@ -6,7 +6,7 @@ const OWNER = 'rogerwang@wiseshare.com.tw';   // 收新名單通知的信箱
 const SITE = 'https://www.wiseshare.com.tw';
 const DIMS = ['經營與組織力', 'B2B 銷售與獲客力', '數位與 AI 賦能力', '接班與傳承力'];
 const TIE_ORDER = [3, 0, 1, 2];  // 同分時優先順序：接班 > 經營 > 業務 > 數位
-const FREE_MINUTES = '';         // 免費解析時長（分鐘），確定後填入，例如 '30'
+const FREE_MINUTES = '60';       // 免費解析時長（分鐘）
 
 const TIERS = [
   { max: 28, name: '轉型急救期', light: '紅燈',
