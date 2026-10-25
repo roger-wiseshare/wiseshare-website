@@ -240,3 +240,12 @@ fieldset.q label:has(input:checked){background:var(--gold-soft)}
   header.site,footer.site,.float-cta,.cta-inline,.r-print,.banner{display:none!important}
   body{background:#fff;color:#000}
 }
+blockquote.pull{margin:28px 0 0;padding:16px 20px;border-left:4px solid var(--gold);background:var(--surface);font-family:var(--font-display);font-size:18px;max-width:44em}
+.matrix.compare tbody th{white-space:normal}
+@media (min-width:721px){.matrix.compare tbody th{width:22%}}
+.faq{display:grid;gap:12px;max-width:52em;margin-top:16px}
+.faq details{border:1px solid var(--line);border-radius:6px;padding:14px 18px}
+.faq summary{font-weight:700;cursor:pointer}
+.faq details p{margin-top:10px}
+a.link-card{text-decoration:none}
+a.link-card:hover{border-color:var(--gold)}
