@@ -253,3 +253,12 @@ blockquote.pull{margin:28px 0 0;padding:16px 20px;border-left:4px solid var(--go
 .faq details p{margin-top:10px}
 a.link-card{text-decoration:none}
 a.link-card:hover{border-color:var(--gold)}
+/* 顧問團隊：一位顧問一張橫向卡片 */
+.card.profile{display:grid;grid-template-columns:200px minmax(0,1fr);gap:28px;align-items:start}
+.profile .photo{width:200px}
+.profile h3 small{display:block;font-family:var(--font-body);font-size:15px;color:var(--gold);font-weight:700;margin-top:4px}
+.profile h4{font-size:15px;color:var(--muted);margin:18px 0 6px}
+.profile ul{margin:0;padding-left:1.2em;line-height:1.8}
+.profile ul.tags{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.profile ul.tags li{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 12px;font-size:14px}
+@media (max-width:720px){.card.profile{grid-template-columns:1fr}.profile .photo{width:140px}}
