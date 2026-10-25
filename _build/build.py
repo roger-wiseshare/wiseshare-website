@@ -1,5 +1,6 @@
 # 官網建置腳本：把 pages/ 裡每頁的主內容，套上共用的頁首、頁尾，輸出到儲存庫根目錄。
 # 用法：python3 _build/build.py
+import hashlib
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -69,6 +70,10 @@ FOOTER = '''<footer class="site"><div class="wrap">
 </div></footer>'''
 
 
+# 樣式表加上版本號，改版後瀏覽器不會沿用舊的快取
+CSS_VER = hashlib.md5((ROOT / 'style.css').read_bytes()).hexdigest()[:8]
+
+
 def page(name):
     title, current = META[name]
     full = title if name == 'index' else f'{title}｜智享數位資通'
@@ -84,7 +89,7 @@ def page(name):
 <meta name="description" content="{DESC}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v={CSS_VER}">
 <link rel="icon" type="image/png" href="images/favicon.png">
 <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 {script}</head>
