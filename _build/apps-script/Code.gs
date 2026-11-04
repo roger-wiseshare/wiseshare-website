@@ -1,6 +1,6 @@
 // 官網名單收件程式（一個網址同時收兩種表單）：
 //   1. 3 分鐘企業轉型健檢：寫入「健檢」分頁、寄診斷報告給訪客、寄通知信給 OWNER。
-//   2. 預約免費轉型診斷：寫入「預約診斷」分頁、送 Google Chat 通知（每 4 小時一次，共 3 次）。
+//   2. 預約免費轉型診斷：寫入「預約診斷」分頁、寄通知信給 OWNER、送 Google Chat 通知（每 4 小時一次，共 3 次）。
 // 安裝在「官網名單」Google 試算表的 Apps Script（擴充功能 → Apps Script），部署為網頁應用程式。
 // Google Chat 的 Webhook 網址放在「專案設定 → 指令碼屬性」的 CHAT_WEBHOOK，不寫在程式裡。
 // 部署步驟見同資料夾的 README.md。
@@ -121,8 +121,29 @@ function contactPost(d, email) {
     sh.getRange(r, 1).setNumberFormat('yyyy/mm/dd hh:mm');
     sh.getRange(r, C['上次通知']).setNumberFormat('yyyy/mm/dd hh:mm');
     notify(sh, r);
+    mailOwner(sh, r);
   } finally {
     lock.releaseLock();
+  }
+}
+
+// 寄一封新預約通知信給 OWNER（含全部欄位），訪客的 Email 設為回覆對象，直接按「回覆」就能聯絡
+function mailOwner(sh, r) {
+  try {
+    const v = sh.getRange(r, 1, 1, CONTACT_HEAD.length).getValues()[0];
+    const rows = CONTACT_HEAD.slice(1, C['已聯絡'] - 1).map((h, i) =>
+      `<tr><td style="padding:4px 12px 4px 0;color:#5a6578;white-space:nowrap;vertical-align:top">${h}</td><td style="padding:4px 0">${esc(v[i + 1]).replace(/\n/g, '<br>')}</td></tr>`).join('');
+    MailApp.sendEmail({
+      to: OWNER,
+      replyTo: String(v[C['Email'] - 1]),
+      name: '智享官網',
+      subject: `【預約免費轉型診斷】${v[C['公司'] - 1]} ${v[C['姓名'] - 1]}｜${v[C['想先處理'] - 1]}`,
+      htmlBody: `<div style="font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;font-size:15px;line-height:1.7">` +
+        `<p>官網有一筆新的預約免費轉型診斷：</p><table cellspacing="0">${rows}</table>` +
+        `<p>直接回覆這封信就會寄給對方。完整名單：<a href="${sh.getParent().getUrl()}#gid=${sh.getSheetId()}">官網名單｜預約診斷</a>（第 ${r} 列）。聯絡後請勾選「已聯絡」，Chat 就不會再提醒。</p></div>`,
+    });
+  } catch (err) {
+    console.error(err);
   }
 }
 
@@ -186,7 +207,7 @@ function setup() {
   sendChat('官網名單通知已設定完成。之後有人填寫「預約免費轉型診斷」，會在這裡收到通知。');
 }
 
-// 測試預約表單：會寫入一列測試資料，並送出第 1 次 Chat 通知（測完可刪掉那一列）
+// 測試預約表單：會寫入一列測試資料，寄一封通知信給 OWNER，並送出第 1 次 Chat 通知（測完可刪掉那一列）
 function testContact() {
   contactPost({ name: '測試', company: '測試公司', title: '總經理', topics: ['B2B 銷售轉型'], mode: '先聊聊再說', need: '這是測試資料' }, OWNER);
 }
