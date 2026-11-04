@@ -1,6 +1,6 @@
 // 預約免費轉型診斷表單：送到 Google Apps Script（寫入試算表＋寄通知信給 OWNER）。
 // 把 Apps Script 部署後的網址填進 ENDPOINT（與 checkup.js 用同一個網址）。
-// 留空時，改為開啟訪客的郵件軟體，把填好的內容寄到 OWNER，資料不會遺失。
+// 留空時，在頁面上列出填好的內容，讓訪客複製後寄信，或自行點連結開啟郵件軟體（不自動跳轉，避免卡住）。
 const ENDPOINT = '';
 const OWNER = 'rogerwang@wiseshare.com.tw';
 
@@ -23,9 +23,43 @@ function collect(f) {
   };
 }
 
-function mailtoLink(d) {
-  const lines = Object.keys(LABELS).map(k => `${LABELS[k]}：${Array.isArray(d[k]) ? d[k].join('、') : (d[k] || '')}`);
-  return `mailto:${OWNER}?subject=${encodeURIComponent(`【預約免費轉型診斷】${d.company} ${d.name}`)}&body=${encodeURIComponent(lines.join('\n'))}`;
+function summary(d) {
+  return Object.keys(LABELS).filter(k => (Array.isArray(d[k]) ? d[k].length : d[k]))
+    .map(k => `${LABELS[k]}：${Array.isArray(d[k]) ? d[k].join('、') : d[k]}`).join('\n');
+}
+
+// 尚未接上收件程式時的備援：顯示內容＋複製按鈕＋寄信連結
+function fallback(d, msg) {
+  const text = summary(d);
+  const subject = `【預約免費轉型診斷】${d.company} ${d.name}`;
+  msg.innerHTML = '';
+  const p = document.createElement('p');
+  p.style.margin = '0 0 8px';
+  p.textContent = `請按「複製內容」，貼到信件中寄到 ${OWNER}；或按「開啟郵件寄出」。`;
+  const pre = document.createElement('pre');
+  pre.style.cssText = 'white-space:pre-wrap;font:inherit;font-size:14px;margin:0 0 10px;background:var(--bg);padding:10px;border-radius:4px';
+  pre.textContent = text;
+  const copy = document.createElement('button');
+  copy.type = 'button';
+  copy.className = 'btn dark';
+  copy.textContent = '複製內容';
+  copy.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(`${subject}\n\n${text}`);
+      copy.textContent = '已複製';
+    } catch (err) {
+      const r = document.createRange(); r.selectNodeContents(pre);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      copy.textContent = '已選取，請按 Ctrl＋C／⌘＋C';
+    }
+  });
+  const a = document.createElement('a');
+  a.className = 'btn ghost';
+  a.style.marginLeft = '8px';
+  a.href = `mailto:${OWNER}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+  a.textContent = '開啟郵件寄出';
+  msg.append(p, pre, copy, a);
+  msg.hidden = false;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -47,8 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btn = f.querySelector('button[type=submit]');
     if (!ENDPOINT) {
-      window.location.href = mailtoLink(d);
-      say(`已開啟您的郵件軟體，請按「傳送」把資料寄給我們。若沒有跳出視窗，請直接來信 ${OWNER}。`);
+      fallback(d, msg);
       return;
     }
     btn.disabled = true;
