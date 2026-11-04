@@ -1,4 +1,4 @@
-// 預約免費轉型診斷表單：送到 Google Apps Script（寫入試算表＋Google Chat 通知）。
+// 預約免費轉型診斷表單：送到 Google Apps Script（寫入試算表＋寄通知信給 OWNER）。
 // 把 Apps Script 部署後的網址填進 ENDPOINT（與 checkup.js 用同一個網址）。
 // 留空時，改為開啟訪客的郵件軟體，把填好的內容寄到 OWNER，資料不會遺失。
 const ENDPOINT = '';
