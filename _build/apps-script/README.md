@@ -1,24 +1,47 @@
-# 健檢寄信設定（Google Apps Script）
+# 官網名單收件設定（Google Apps Script）
 
-讓「3 分鐘企業健檢」在訪客留下資料後，自動做三件事：寫入 Google 試算表、寄診斷報告給訪客、寄新名單通知給 rogerwang@wiseshare.com.tw。全部免費；每天可寄 100 位（個人 Gmail）或 1,500 位（Google Workspace）收件者（[Google 配額表](https://developers.google.com/apps-script/guides/services/quotas)）。
+一個程式、一個網址，同時處理官網兩張表單，全部免費：
 
-請用 **rogerwang@wiseshare.com.tw** 登入 Google 操作，信件就會從這個信箱寄出。約需 10 分鐘。
+| 表單 | 寫入試算表分頁 | 通知 |
+|---|---|---|
+| 3 分鐘企業健檢（checkup.html） | 健檢 | 寄診斷報告給訪客、寄通知信給 rogerwang@wiseshare.com.tw |
+| 預約免費轉型診斷（contact.html） | 預約診斷 | Google Chat 通知：填表當下 1 次，之後每 4 小時 1 次，共 3 次；在試算表勾選「已聯絡」就停止提醒 |
 
-## 步驟
+免費額度（[Google 配額表](https://developers.google.com/apps-script/guides/services/quotas)）：寄信每天 100 位（個人 Gmail）或 1,500 位（Google Workspace）收件者；呼叫 Chat 等外部網址每天 20,000 次（個人）或 100,000 次（Workspace）；觸發條件執行時間每天 90 分鐘（個人）或 6 小時（Workspace）。每 30 分鐘檢查一次提醒，一天 48 次，每次約 1 秒，遠低於上限。
 
-1. 開啟 https://sheets.new ，建立一份新試算表，命名為「健檢名單」。
+請用 **rogerwang@wiseshare.com.tw** 登入 Google 操作，約需 15 分鐘。Google Chat 的 Webhook 只有 Google Workspace 帳號能建立。
+
+## 一、建立 Google Chat 通知用的 Webhook
+
+1. 開啟 https://chat.google.com ，建立一個聊天室（例如「官網名單通知」），把需要收通知的同事加進來。
+2. 點聊天室名稱 →「應用程式與整合」→「Webhook」→「新增 Webhook」。
+3. 名稱填「官網通知」，按「儲存」，複製出現的網址（以 `https://chat.googleapis.com/v1/spaces/` 開頭）。
+4. **這個網址等同密碼，任何人拿到都能在聊天室發訊息。請不要貼給 Claude，也不要放上 GitHub。**
+
+## 二、建立試算表與程式
+
+1. 開啟 https://sheets.new ，建立一份新試算表，命名為「官網名單」。
 2. 上方選單點「擴充功能」→「Apps Script」，會開啟程式編輯器。
 3. 刪掉編輯器裡原本的內容，把同資料夾 `Code.gs` 的全部內容貼上，按「儲存」（磁碟圖示）。
-4. （建議）免費解析時長確定後，把程式中 `const FREE_MINUTES = '';` 改成例如 `'30'`。
-5. 先測試：上方函式選單選 `testRun`，按「執行」。第一次會要求授權，依序點「審查權限」→ 選您的帳號 →「進階」→「前往（不安全）」→「允許」。（這是您自己寫給自己用的程式，Google 才會顯示這個警告。）
-6. 執行完成後，rogerwang@wiseshare.com.tw 應該會收到兩封信（一封測試報告、一封新名單通知），試算表也會多一列資料。
-7. 部署：右上角「部署」→「新增部署作業」→ 齒輪圖示選「網頁應用程式」。
-   - 說明：健檢寄信
+4. 左側齒輪「專案設定」→ 最下方「指令碼屬性」→「新增指令碼屬性」：屬性填 `CHAT_WEBHOOK`，值貼上第一部分複製的網址，按「儲存指令碼屬性」。
+5. 回到左側「編輯器」，上方函式選單選 `setup`，按「執行」。第一次會要求授權，依序點「審查權限」→ 選您的帳號 →「進階」→「前往（不安全）」→「允許」。（這是您自己寫給自己用的程式，Google 才會顯示這個警告。）完成後 Chat 聊天室會收到「官網名單通知已設定完成」。
+6. 測試預約表單：函式選單選 `testContact`，按「執行」。試算表會多一個「預約診斷」分頁和一列測試資料，Chat 會收到一則通知。測完可刪掉那一列。
+7. 測試健檢：函式選單選 `testRun`，按「執行」。rogerwang@wiseshare.com.tw 會收到兩封信，試算表會多一個「健檢」分頁。
+
+## 三、部署
+
+1. 右上角「部署」→「新增部署作業」→ 齒輪圖示選「網頁應用程式」。
+   - 說明：官網名單
    - 執行身分：**我**
    - 誰可以存取：**所有人**
-8. 按「部署」，複製出現的「網頁應用程式網址」（以 `https://script.google.com/macros/s/` 開頭），貼給 Claude。
+2. 按「部署」，複製出現的「網頁應用程式網址」（以 `https://script.google.com/macros/s/` 開頭），貼給 Claude。這個網址只能送資料進來、不能讀資料，可以公開。
 
-收到網址後，Claude 會把它填進網站 `checkup.js` 的 `ENDPOINT`，健檢就會改成「留資料寄送完整報告」。
+收到網址後，Claude 會把它填進網站 `contact.js` 與 `checkup.js` 的 `ENDPOINT`。在那之前，預約表單會改為開啟訪客的郵件軟體，把資料寄到 rogerwang@wiseshare.com.tw。
+
+## 日常使用
+
+- 聯絡完客戶後，在「預約診斷」分頁勾選該列的「已聯絡」，就不會再收到提醒。
+- 提醒時間：填表當下、約 4 小時後、約 8 小時後（每 30 分鐘檢查一次，最多晚 30 分鐘）。
 
 ## 之後修改程式
 

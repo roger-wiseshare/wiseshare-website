@@ -1,5 +1,8 @@
-// 3 分鐘企業轉型健檢：收名單、寄診斷信。
-// 安裝在「健檢名單」Google 試算表的 Apps Script（擴充功能 → Apps Script），部署為網頁應用程式。
+// 官網名單收件程式（一個網址同時收兩種表單）：
+//   1. 3 分鐘企業轉型健檢：寫入「健檢」分頁、寄診斷報告給訪客、寄通知信給 OWNER。
+//   2. 預約免費轉型診斷：寫入「預約診斷」分頁、送 Google Chat 通知（每 4 小時一次，共 3 次）。
+// 安裝在「官網名單」Google 試算表的 Apps Script（擴充功能 → Apps Script），部署為網頁應用程式。
+// Google Chat 的 Webhook 網址放在「專案設定 → 指令碼屬性」的 CHAT_WEBHOOK，不寫在程式裡。
 // 部署步驟見同資料夾的 README.md。
 
 const OWNER = 'rogerwang@wiseshare.com.tw';   // 收新名單通知的信箱
@@ -27,47 +30,165 @@ function doPost(e) {
     const email = String(d.email || '').trim();
     if (!/^\S+@\S+\.\S+$/.test(email)) return ok();
     const cache = CacheService.getScriptCache();
-    if (cache.get(email)) return ok();                             // 1 分鐘內重複送出
-    cache.put(email, '1', 60);
-
-    const dims = (d.dims || []).slice(0, 4).map(n => Math.max(3, Math.min(15, Number(n) || 3)));
-    const total = dims.reduce((a, b) => a + b, 0);
-    const min = Math.min(...dims);
-    const low = TIE_ORDER.find(i => dims[i] === min);
-    const tier = TIERS.find(t => total <= t.max);
-    const lead = {
-      name: clean(d.name), company: clean(d.company), title: clean(d.title), email,
-      total, tier, low, dims, answers: d.answers || [],
-    };
-
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['時間', '姓名', '公司', '職稱', 'Email', '總分', '分級', '最低面向', ...DIMS, '各題分數']);
-    }
-    sheet.appendRow([
-      new Date(), lead.name, lead.company, lead.title, email, total, tier.light + '｜' + tier.name,
-      DIMS[low], ...dims, JSON.stringify(lead.answers),
-    ]);
-
-    MailApp.sendEmail({
-      to: email,
-      replyTo: OWNER,
-      name: '智享數位資通',
-      subject: `技術很好、團隊很忙，獲利卻卡關？${lead.company} 的專屬轉型健檢報告`,
-      htmlBody: reportHtml(lead),
-    });
-    MailApp.sendEmail({
-      to: OWNER,
-      subject: `【健檢新名單】${lead.company} ${lead.name}｜${total} 分 ${tier.light}｜最低：${DIMS[low]}`,
-      htmlBody: `<p>${lead.name}（${lead.title || '未填職稱'}）／${lead.company}／${esc(email)}</p>` +
-        `<p>總分 ${total} ／ 60（${tier.light}｜${tier.name}）</p>` +
-        `<p>${DIMS.map((n, i) => `${n}：${dims[i]} ／ 15`).join('<br>')}</p>` +
-        `<p>完整資料已寫入試算表：${SpreadsheetApp.getActiveSpreadsheet().getUrl()}</p>`,
-    });
+    const key = (d.type === 'contact' ? 'c:' : 'k:') + email;
+    if (cache.get(key)) return ok();                               // 1 分鐘內重複送出
+    cache.put(key, '1', 60);
+    if (d.type === 'contact') contactPost(d, email);
+    else checkupPost(d, email);
   } catch (err) {
     console.error(err);
   }
   return ok();
+}
+
+function checkupPost(d, email) {
+  const dims = (d.dims || []).slice(0, 4).map(n => Math.max(3, Math.min(15, Number(n) || 3)));
+  const total = dims.reduce((a, b) => a + b, 0);
+  const min = Math.min(...dims);
+  const low = TIE_ORDER.find(i => dims[i] === min);
+  const tier = TIERS.find(t => total <= t.max);
+  const lead = {
+    name: clean(d.name), company: clean(d.company), title: clean(d.title), email,
+    total, tier, low, dims, answers: d.answers || [],
+  };
+
+  const sheet = tab('健檢', ['時間', '姓名', '公司', '職稱', 'Email', '總分', '分級', '最低面向', ...DIMS, '各題分數']);
+  sheet.appendRow([
+    new Date(), lead.name, lead.company, lead.title, email, total, tier.light + '｜' + tier.name,
+    DIMS[low], ...dims, JSON.stringify(lead.answers),
+  ]);
+
+  MailApp.sendEmail({
+    to: email,
+    replyTo: OWNER,
+    name: '智享數位資通',
+    subject: `技術很好、團隊很忙，獲利卻卡關？${lead.company} 的專屬轉型健檢報告`,
+    htmlBody: reportHtml(lead),
+  });
+  MailApp.sendEmail({
+    to: OWNER,
+    subject: `【健檢新名單】${lead.company} ${lead.name}｜${total} 分 ${tier.light}｜最低：${DIMS[low]}`,
+    htmlBody: `<p>${lead.name}（${lead.title || '未填職稱'}）／${lead.company}／${esc(email)}</p>` +
+      `<p>總分 ${total} ／ 60（${tier.light}｜${tier.name}）</p>` +
+      `<p>${DIMS.map((n, i) => `${n}：${dims[i]} ／ 15`).join('<br>')}</p>` +
+      `<p>完整資料已寫入試算表：${SpreadsheetApp.getActiveSpreadsheet().getUrl()}</p>`,
+  });
+}
+
+// 取得指定名稱的分頁；沒有就建立並寫入表頭
+function tab(name, head) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(name);
+  if (!sh) sh = ss.insertSheet(name);
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(head);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+// ───────── 預約免費轉型診斷 ─────────
+
+const REMIND_TIMES = 3;        // 每筆共通知幾次
+const REMIND_HOURS = 4;        // 每次間隔幾小時
+const CONTACT_HEAD = ['時間', '姓名', '公司', '職稱', '角色', '產業', 'Email', '電話', '公司規模',
+  '想先處理', '開始方式', '最頭痛的問題', '方便聯絡時段', '從哪裡得知', '已聯絡', '已通知次數', '上次通知'];
+const C = Object.fromEntries(CONTACT_HEAD.map((h, i) => [h, i + 1]));  // 欄名 → 欄號（從 1 起算）
+
+function plain(s, n) {
+  return String(s || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n || 80);
+}
+
+// 寫入試算表的文字前面加 '：保留電話開頭的 0，也避免以 = 開頭的內容被當成公式
+function txt(s) {
+  return s ? "'" + s : '';
+}
+
+function contactPost(d, email) {
+  const text = [
+    plain(d.name, 40), plain(d.company), plain(d.title, 40), plain(d.role, 20), plain(d.industry, 40),
+    plain(email, 100), plain(d.phone, 30), plain(d.size, 20), (d.topics || []).slice(0, 5).map(t => plain(t, 20)).join('、'),
+    plain(d.mode, 20), String(d.need || '').trim().slice(0, 1000), plain(d.time, 10), plain(d.source, 20),
+  ];
+  const row = [new Date(), ...text.map(txt), false, 0, ''];
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const sh = tab('預約診斷', CONTACT_HEAD);
+    sh.appendRow(row);
+    const r = sh.getLastRow();
+    sh.getRange(r, C['已聯絡']).insertCheckboxes();
+    sh.getRange(r, 1).setNumberFormat('yyyy/mm/dd hh:mm');
+    sh.getRange(r, C['上次通知']).setNumberFormat('yyyy/mm/dd hh:mm');
+    notify(sh, r);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// 送出第 n 次通知並記錄；Webhook 失敗時不記錄，下一輪會再試
+function notify(sh, r) {
+  const v = sh.getRange(r, 1, 1, CONTACT_HEAD.length).getValues()[0];
+  const n = Number(v[C['已通知次數'] - 1]) + 1;
+  const tag = n === 1 ? '新的預約' : `第 ${n} 次提醒，尚未標記「已聯絡」`;
+  const when = Utilities.formatDate(new Date(v[0]), 'Asia/Taipei', 'yyyy/MM/dd HH:mm');
+  const text = [
+    `*【官網預約免費轉型診斷｜${tag}（${n}／${REMIND_TIMES}）】*`,
+    `${v[C['公司'] - 1]}　${v[C['姓名'] - 1]}${v[C['職稱'] - 1] ? '（' + v[C['職稱'] - 1] + '）' : ''}`,
+    `Email：${v[C['Email'] - 1]}${v[C['電話'] - 1] ? '　電話：' + v[C['電話'] - 1] : ''}`,
+    `想先處理：${v[C['想先處理'] - 1]}${v[C['開始方式'] - 1] ? '　方式：' + v[C['開始方式'] - 1] : ''}`,
+    v[C['最頭痛的問題'] - 1] ? `最頭痛的問題：${String(v[C['最頭痛的問題'] - 1]).slice(0, 300)}` : '',
+    `填表時間：${when}（第 ${r} 列）`,
+    `名單：${sh.getParent().getUrl()}#gid=${sh.getSheetId()}`,
+    n < REMIND_TIMES ? `聯絡後請在試算表勾選「已聯絡」，就不會再提醒。` : '這是最後一次提醒。',
+  ].filter(Boolean).join('\n');
+  if (!sendChat(text)) return;
+  sh.getRange(r, C['已通知次數'], 1, 2).setValues([[n, new Date()]]);
+}
+
+function sendChat(text) {
+  const url = PropertiesService.getScriptProperties().getProperty('CHAT_WEBHOOK');
+  if (!url) { console.error('尚未設定 CHAT_WEBHOOK'); return false; }
+  const res = UrlFetchApp.fetch(url, {
+    method: 'post', contentType: 'application/json; charset=UTF-8',
+    payload: JSON.stringify({ text }), muteHttpExceptions: true,
+  });
+  if (res.getResponseCode() !== 200) { console.error(res.getContentText()); return false; }
+  return true;
+}
+
+// 每 30 分鐘由觸發條件執行：距上次通知滿 4 小時、還沒勾「已聯絡」、通知未滿 3 次的，就再送一次
+function remind() {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return;
+  try {
+    const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('預約診斷');
+    if (!sh || sh.getLastRow() < 2) return;
+    const rows = sh.getRange(2, 1, sh.getLastRow() - 1, CONTACT_HEAD.length).getValues();
+    const due = Date.now() - REMIND_HOURS * 3600 * 1000 + 5 * 60 * 1000;  // 容許 5 分鐘誤差
+    rows.forEach((v, i) => {
+      const n = Number(v[C['已通知次數'] - 1]) || 0;
+      const lastAt = v[C['上次通知'] - 1] ? new Date(v[C['上次通知'] - 1]).getTime() : 0;
+      if (v[C['已聯絡'] - 1] === true || n >= REMIND_TIMES) return;
+      if (n > 0 && lastAt > due) return;
+      notify(sh, i + 2);                                           // n === 0：第一次通知先前失敗，補送
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// 部署前在編輯器執行一次：建立「每 30 分鐘檢查提醒」的觸發條件（重複執行不會重複建立）
+function setup() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'remind').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('remind').timeBased().everyMinutes(30).create();
+  tab('預約診斷', CONTACT_HEAD);
+  sendChat('官網名單通知已設定完成。之後有人填寫「預約免費轉型診斷」，會在這裡收到通知。');
+}
+
+// 測試預約表單：會寫入一列測試資料，並送出第 1 次 Chat 通知（測完可刪掉那一列）
+function testContact() {
+  contactPost({ name: '測試', company: '測試公司', title: '總經理', topics: ['B2B 銷售轉型'], mode: '先聊聊再說', need: '這是測試資料' }, OWNER);
 }
 
 function ok() {

@@ -79,7 +79,8 @@ def page(name):
     full = title if name == 'index' else f'{title}｜智享數位資通'
     body = (PAGES / f'{name}.html').read_text(encoding='utf-8').rstrip('\n')
     float_btn = '' if name in ('contact', 'checkup') else '<a class="btn primary float-cta" href="contact.html">預約免費診斷</a>\n'
-    script = '<script src="checkup.js" defer></script>\n' if name == 'checkup' else ''
+    js = {'checkup': 'checkup.js', 'contact': 'contact.js'}.get(name)
+    script = f'<script src="{js}" defer></script>\n' if js else ''
     return f'''<!doctype html>
 <html lang="zh-Hant-TW">
 <head>
