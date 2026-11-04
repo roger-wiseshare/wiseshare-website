@@ -1,7 +1,7 @@
 // 預約免費轉型診斷表單：送到 Google Apps Script（寫入試算表＋寄通知信給 OWNER）。
 // 把 Apps Script 部署後的網址填進 ENDPOINT（與 checkup.js 用同一個網址）。
 // 留空時，在頁面上列出填好的內容，讓訪客複製後寄信，或自行點連結開啟郵件軟體（不自動跳轉，避免卡住）。
-const ENDPOINT = '';
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzDF2JY9GV56Fz_rSlsAYYMtl5EVfFAYYHN6COQpt0_i2QyvZQA2venFR3r_XQO3FbfSw/exec';
 const OWNER = 'rogerwang@wiseshare.com.tw';
 
 const LABELS = {
