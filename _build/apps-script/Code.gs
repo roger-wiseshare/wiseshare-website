@@ -1,3 +1,5 @@
+/** @OnlyCurrentDoc */
+// ↑ 限制這支程式只能存取它所在的這一份試算表，碰不到您雲端硬碟裡的其他檔案。
 // 官網名單收件程式（一個網址同時收兩種表單）：
 //   1. 3 分鐘企業轉型健檢：寫入「健檢」分頁、寄診斷報告給訪客、寄通知信給 OWNER。
 //   2. 預約免費轉型診斷：寫入「預約診斷」分頁、寄通知信給 OWNER。
@@ -28,6 +30,7 @@ function doPost(e) {
     if (d.website) return ok();                                    // 機器人
     const email = String(d.email || '').trim();
     if (!/^\S+@\S+\.\S+$/.test(email)) return ok();
+    if (!underDailyLimit()) return ok();                           // 每日上限，防止被大量灌單
     const cache = CacheService.getScriptCache();
     const key = (d.type === 'contact' ? 'c:' : 'k:') + email;
     if (cache.get(key)) return ok();                               // 1 分鐘內重複送出
@@ -145,6 +148,23 @@ function mailOwner(sh, r) {
 // 測試預約表單：會寫入一列測試資料，並寄一封通知信給 OWNER（測完可刪掉那一列）
 function testContact() {
   contactPost({ name: '測試', company: '測試公司', title: '總經理', topics: ['B2B 銷售轉型'], mode: '先聊聊再說', need: '這是測試資料' }, OWNER);
+}
+
+// 每天最多處理 DAILY_MAX 筆（兩張表單合計），超過的當天不寫入也不寄信，避免信件配額被耗盡
+const DAILY_MAX = 50;
+function underDailyLimit() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const key = 'n:' + Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd');
+    const n = Number(props.getProperty(key)) || 0;
+    if (n >= DAILY_MAX) return false;
+    props.setProperty(key, String(n + 1));
+    return true;
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function ok() {
