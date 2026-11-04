@@ -1,6 +1,6 @@
 // 3 分鐘企業轉型健檢：在瀏覽器計分，不需要伺服器。
 // 寄送完整報告：把 Google Apps Script 部署後的網址填進 ENDPOINT。留空時，結果會直接全部顯示在頁面上。
-const ENDPOINT = '';
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzDF2JY9GV56Fz_rSlsAYYMtl5EVfFAYYHN6COQpt0_i2QyvZQA2venFR3r_XQO3FbfSw/exec';
 
 const DIMS = ['經營與組織力', 'B2B 銷售與獲客力', '數位與 AI 賦能力', '接班與傳承力'];
 // 同分時，依這個順序決定「最該優先處理的面向」：接班 > 經營 > 業務 > 數位
