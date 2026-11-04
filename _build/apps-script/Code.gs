@@ -1,5 +1,7 @@
-// 3 分鐘企業轉型健檢：收名單、寄診斷信。
-// 安裝在「健檢名單」Google 試算表的 Apps Script（擴充功能 → Apps Script），部署為網頁應用程式。
+// 官網名單收件程式（一個網址同時收兩種表單）：
+//   1. 3 分鐘企業轉型健檢：寫入「健檢」分頁、寄診斷報告給訪客、寄通知信給 OWNER。
+//   2. 預約免費轉型診斷：寫入「預約診斷」分頁、寄通知信給 OWNER。
+// 安裝在「官網名單」Google 試算表的 Apps Script（擴充功能 → Apps Script），部署為網頁應用程式。
 // 部署步驟見同資料夾的 README.md。
 
 const OWNER = 'rogerwang@wiseshare.com.tw';   // 收新名單通知的信箱
@@ -27,47 +29,122 @@ function doPost(e) {
     const email = String(d.email || '').trim();
     if (!/^\S+@\S+\.\S+$/.test(email)) return ok();
     const cache = CacheService.getScriptCache();
-    if (cache.get(email)) return ok();                             // 1 分鐘內重複送出
-    cache.put(email, '1', 60);
-
-    const dims = (d.dims || []).slice(0, 4).map(n => Math.max(3, Math.min(15, Number(n) || 3)));
-    const total = dims.reduce((a, b) => a + b, 0);
-    const min = Math.min(...dims);
-    const low = TIE_ORDER.find(i => dims[i] === min);
-    const tier = TIERS.find(t => total <= t.max);
-    const lead = {
-      name: clean(d.name), company: clean(d.company), title: clean(d.title), email,
-      total, tier, low, dims, answers: d.answers || [],
-    };
-
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['時間', '姓名', '公司', '職稱', 'Email', '總分', '分級', '最低面向', ...DIMS, '各題分數']);
-    }
-    sheet.appendRow([
-      new Date(), lead.name, lead.company, lead.title, email, total, tier.light + '｜' + tier.name,
-      DIMS[low], ...dims, JSON.stringify(lead.answers),
-    ]);
-
-    MailApp.sendEmail({
-      to: email,
-      replyTo: OWNER,
-      name: '智享數位資通',
-      subject: `技術很好、團隊很忙，獲利卻卡關？${lead.company} 的專屬轉型健檢報告`,
-      htmlBody: reportHtml(lead),
-    });
-    MailApp.sendEmail({
-      to: OWNER,
-      subject: `【健檢新名單】${lead.company} ${lead.name}｜${total} 分 ${tier.light}｜最低：${DIMS[low]}`,
-      htmlBody: `<p>${lead.name}（${lead.title || '未填職稱'}）／${lead.company}／${esc(email)}</p>` +
-        `<p>總分 ${total} ／ 60（${tier.light}｜${tier.name}）</p>` +
-        `<p>${DIMS.map((n, i) => `${n}：${dims[i]} ／ 15`).join('<br>')}</p>` +
-        `<p>完整資料已寫入試算表：${SpreadsheetApp.getActiveSpreadsheet().getUrl()}</p>`,
-    });
+    const key = (d.type === 'contact' ? 'c:' : 'k:') + email;
+    if (cache.get(key)) return ok();                               // 1 分鐘內重複送出
+    cache.put(key, '1', 60);
+    if (d.type === 'contact') contactPost(d, email);
+    else checkupPost(d, email);
   } catch (err) {
     console.error(err);
   }
   return ok();
+}
+
+function checkupPost(d, email) {
+  const dims = (d.dims || []).slice(0, 4).map(n => Math.max(3, Math.min(15, Number(n) || 3)));
+  const total = dims.reduce((a, b) => a + b, 0);
+  const min = Math.min(...dims);
+  const low = TIE_ORDER.find(i => dims[i] === min);
+  const tier = TIERS.find(t => total <= t.max);
+  const lead = {
+    name: clean(d.name), company: clean(d.company), title: clean(d.title), email,
+    total, tier, low, dims, answers: d.answers || [],
+  };
+
+  const sheet = tab('健檢', ['時間', '姓名', '公司', '職稱', 'Email', '總分', '分級', '最低面向', ...DIMS, '各題分數']);
+  sheet.appendRow([
+    new Date(), lead.name, lead.company, lead.title, email, total, tier.light + '｜' + tier.name,
+    DIMS[low], ...dims, JSON.stringify(lead.answers),
+  ]);
+
+  MailApp.sendEmail({
+    to: email,
+    replyTo: OWNER,
+    name: '智享數位資通',
+    subject: `技術很好、團隊很忙，獲利卻卡關？${lead.company} 的專屬轉型健檢報告`,
+    htmlBody: reportHtml(lead),
+  });
+  MailApp.sendEmail({
+    to: OWNER,
+    subject: `【健檢新名單】${lead.company} ${lead.name}｜${total} 分 ${tier.light}｜最低：${DIMS[low]}`,
+    htmlBody: `<p>${lead.name}（${lead.title || '未填職稱'}）／${lead.company}／${esc(email)}</p>` +
+      `<p>總分 ${total} ／ 60（${tier.light}｜${tier.name}）</p>` +
+      `<p>${DIMS.map((n, i) => `${n}：${dims[i]} ／ 15`).join('<br>')}</p>` +
+      `<p>完整資料已寫入試算表：${SpreadsheetApp.getActiveSpreadsheet().getUrl()}</p>`,
+  });
+}
+
+// 取得指定名稱的分頁；沒有就建立並寫入表頭
+function tab(name, head) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(name);
+  if (!sh) sh = ss.insertSheet(name);
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(head);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+// ───────── 預約免費轉型診斷 ─────────
+
+const CONTACT_HEAD = ['時間', '姓名', '公司', '職稱', '角色', '產業', 'Email', '電話', '公司規模',
+  '想先處理', '開始方式', '最頭痛的問題', '方便聯絡時段', '從哪裡得知', '已聯絡'];
+const C = Object.fromEntries(CONTACT_HEAD.map((h, i) => [h, i + 1]));  // 欄名 → 欄號（從 1 起算）
+
+function plain(s, n) {
+  return String(s || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n || 80);
+}
+
+// 寫入試算表的文字前面加 '：保留電話開頭的 0，也避免以 = 開頭的內容被當成公式
+function txt(s) {
+  return s ? "'" + s : '';
+}
+
+function contactPost(d, email) {
+  const text = [
+    plain(d.name, 40), plain(d.company), plain(d.title, 40), plain(d.role, 20), plain(d.industry, 40),
+    plain(email, 100), plain(d.phone, 30), plain(d.size, 20), (d.topics || []).slice(0, 5).map(t => plain(t, 20)).join('、'),
+    plain(d.mode, 20), String(d.need || '').trim().slice(0, 1000), plain(d.time, 10), plain(d.source, 20),
+  ];
+  const row = [new Date(), ...text.map(txt), false];
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const sh = tab('預約診斷', CONTACT_HEAD);
+    sh.appendRow(row);
+    const r = sh.getLastRow();
+    sh.getRange(r, C['已聯絡']).insertCheckboxes();
+    sh.getRange(r, 1).setNumberFormat('yyyy/mm/dd hh:mm');
+    mailOwner(sh, r);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// 寄一封新預約通知信給 OWNER（含全部欄位），訪客的 Email 設為回覆對象，直接按「回覆」就能聯絡
+function mailOwner(sh, r) {
+  try {
+    const v = sh.getRange(r, 1, 1, CONTACT_HEAD.length).getValues()[0];
+    const rows = CONTACT_HEAD.slice(1, C['已聯絡'] - 1).map((h, i) =>
+      `<tr><td style="padding:4px 12px 4px 0;color:#5a6578;white-space:nowrap;vertical-align:top">${h}</td><td style="padding:4px 0">${esc(v[i + 1]).replace(/\n/g, '<br>')}</td></tr>`).join('');
+    MailApp.sendEmail({
+      to: OWNER,
+      replyTo: String(v[C['Email'] - 1]),
+      name: '智享官網',
+      subject: `【預約免費轉型診斷】${v[C['公司'] - 1]} ${v[C['姓名'] - 1]}｜${v[C['想先處理'] - 1]}`,
+      htmlBody: `<div style="font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;font-size:15px;line-height:1.7">` +
+        `<p>官網有一筆新的預約免費轉型診斷：</p><table cellspacing="0">${rows}</table>` +
+        `<p>直接回覆這封信就會寄給對方。完整名單：<a href="${sh.getParent().getUrl()}#gid=${sh.getSheetId()}">官網名單｜預約診斷</a>（第 ${r} 列）。聯絡後可在試算表勾選「已聯絡」方便追蹤。</p></div>`,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// 測試預約表單：會寫入一列測試資料，並寄一封通知信給 OWNER（測完可刪掉那一列）
+function testContact() {
+  contactPost({ name: '測試', company: '測試公司', title: '總經理', topics: ['B2B 銷售轉型'], mode: '先聊聊再說', need: '這是測試資料' }, OWNER);
 }
 
 function ok() {
