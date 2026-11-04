@@ -13,7 +13,7 @@
 
 ## 一、建立試算表與程式
 
-1. 開啟 https://sheets.new ，建立一份新試算表，命名為「官網名單」。
+1. 開啟 Google 雲端硬碟裡的「官網名單」試算表（若還沒有，到 https://sheets.new 建立一份並命名為「官網名單」）。
 2. 上方選單點「擴充功能」→「Apps Script」，會開啟程式編輯器。
 3. 刪掉編輯器裡原本的內容，把同資料夾 `Code.gs` 的全部內容貼上，按「儲存」（磁碟圖示）。
 4. 測試預約表單：上方函式選單選 `testContact`，按「執行」。第一次會要求授權，依序點「審查權限」→ 選您的帳號 →「進階」→「前往（不安全）」→「允許」。（這是您自己寫給自己用的程式，Google 才會顯示這個警告。）完成後試算表會多一個「預約診斷」分頁和一列測試資料，rogerwang@wiseshare.com.tw 會收到一封通知信。測完可刪掉那一列。
@@ -27,7 +27,7 @@
    - 誰可以存取：**所有人**
 2. 按「部署」，複製出現的「網頁應用程式網址」（以 `https://script.google.com/macros/s/` 開頭），貼給 Claude。這個網址只能送資料進來、不能讀資料，可以公開。
 
-收到網址後，Claude 會把它填進網站 `contact.js` 與 `checkup.js` 的 `ENDPOINT`。在那之前，預約表單會改為開啟訪客的郵件軟體，把資料寄到 rogerwang@wiseshare.com.tw。
+收到網址後，Claude 會把它填進網站 `contact.js` 與 `checkup.js` 的 `ENDPOINT`。在那之前，預約表單送出後會在頁面上列出填好的內容，讓訪客複製後寄信到 rogerwang@wiseshare.com.tw。
 
 ## 日常使用
 
