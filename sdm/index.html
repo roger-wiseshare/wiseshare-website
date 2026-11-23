@@ -2392,7 +2392,7 @@ var qrcode = function() {
 "use strict";
 /* ============ 設定 ============ */
 var CONFIG = {
-  ENDPOINT: "",
+  ENDPOINT: "https://script.google.com/macros/s/AKfycbzDm0X1xN8i693hXclrbVPKEAqQNoHBrZFvlUgeLnDqNHnbMxmWGPZ5KmbqV8rF5ukqYA/exec",
   VERSION: "v1.0",
   MIN_SECONDS: 180,        // 低於此秒數視為作答過快
   SURVEY_URL: "",          // 留空＝自動使用本頁網址；也可在首頁手動更換
@@ -2400,6 +2400,7 @@ var CONFIG = {
   FEEDBACK: false          // true＝練習版：每題作答後立即顯示對錯、標準答案與解析
 };
 
+var SV={id:"sdm",name:"銷售決策成熟度",sub:"B2B 決策工程學　培訓配套評量",dimTitle:"十大決策心理構面",pilTitle:"三大能力軸",pilSub:"對應培訓總結：洞悉心理、降低風險、捍衛價值。",N:20};
 /* ============ 構面與三大能力軸（對應培訓資料） ============ */
 var DIMS = {
  D1:{n:"互惠原則",e:"先給價值，再談成交；用專業知識建立信任與虧欠感。",g:"一開口就索取時間、直接推型錄，或讓客戶先付出。",a:"把專業知識包裝成免費誘餌（例如針對客戶產業的健檢摘要），再提出15分鐘的具體下一步。"},
@@ -2424,6 +2425,13 @@ var LEVELS = [
  {k:"L3",n:"決策影響型",min:60,raw:"56–67",c:"#5f8f72",d:"能辨識決策旅程中的關鍵節點，並運用心理與風險框架影響決策；仍有個別構面不穩定，或在高壓情境下回到舊習慣。",nx:"針對低分構面做情境演練，並把成功做法沉澱成團隊可複製的話術與模板。"},
  {k:"L4",n:"決策合夥人型",min:80,raw:"68–80",c:"#2f6b4c",d:"能陪伴客戶走過充滿未知的決策深水區：洞悉人心、降低風險、捍衛價值，並與客戶形成信任循環，是客戶不易取代的決策夥伴。",nx:"建議擔任內部教練，將做法沉澱為教戰SOP，並持續檢視在大型案件中是否一致執行。"}
 ];
+var BMETA={
+ basic:{lab:"原始版",title:"共通入門版",ver:"BASIC-v1.0",lv:"入門",desc:"情境直白、重點明確，適合初次接觸 B2B 決策心理的學員暖身與觀念建立。"},
+ adv:{lab:"調整版",title:"共通進階版",ver:"ADV-v1.0",lv:"進階",desc:"選項長度拉平、誘答選項更貼近實務，能拉開學員差異並找出短板。"},
+ auto:{lab:"產業版",title:"車用零組件 OEM/ODM 版",ver:"AUTO-v1.0",lv:"進階（產業）",desc:"以 Tier 1／車廠供應鏈情境編寫，含年降、PPAP、二供、8D 等傳統製造業場景。"}
+};
+
+LEVELS.forEach(function(l,i){var lo=Math.ceil(SV.N+l.min*0.03*SV.N-1e-9),hi=i<3?Math.ceil(SV.N+LEVELS[i+1].min*0.03*SV.N-1e-9)-1:SV.N*4;l.raw=lo+"–"+hi;});
 var TIERS = [{n:"待建立",c:"t0"},{n:"發展中",c:"t1"},{n:"熟練",c:"t2"},{n:"精熟",c:"t3"}];
 
 /* ============ 題庫（題目與選項固定；s＝成熟度分數1~4） ============ */
@@ -2433,11 +2441,6 @@ var BANK=[],WHY={};
 var BANKS={};
 
 var DIMS_BASEA={};Object.keys(DIMS).forEach(function(k){DIMS_BASEA[k]=DIMS[k].a;});
-var BMETA={
- basic:{lab:"原始版",title:"共通入門版",ver:"BASIC-v1.0",lv:"入門",desc:"情境直白、重點明確，適合初次接觸 B2B 決策心理的學員暖身與觀念建立。"},
- adv:{lab:"調整版",title:"共通進階版",ver:"ADV-v1.0",lv:"進階",desc:"選項長度拉平、誘答選項更貼近實務，能拉開學員差異並找出短板。"},
- auto:{lab:"產業版",title:"車用零組件 OEM/ODM 版",ver:"AUTO-v1.0",lv:"進階（產業）",desc:"以 Tier 1／車廠供應鏈情境編寫，含年降、PPAP、二供、8D 等傳統製造業場景。"}
-};
 function convertBank(B){B.bank.forEach(function(q){q.o=q.o.map(function(x){return {id:x[0],s:x[1],t:x[2]};});});return B;}
 Object.keys(BANKS).forEach(function(k){convertBank(BANKS[k]);});
 
@@ -2515,7 +2518,7 @@ function viewGate(){
 }
 function viewCoachMenu(){
   var m=BMETA[BKEY];
-  $app.innerHTML='<div class="wrap"><div class="card"><div class="eyebrow">教練版｜'+esc(m.lab)+'（'+esc(m.title)+'）　題庫 '+m.ver+'</div><h2 style="margin:6px 0 10px">銷售決策成熟度問卷</h2><p class="mute" style="margin:0 0 14px">教練版含標準答案：練習時每題作答後立即顯示對錯與解析，不填基本資料、也不寫入試算表。</p><div class="row"><button class="btn" id="pr">開始練習（即時對錯與解析）</button><button class="btn ghost" id="ky">查看答案總表</button></div></div></div>';
+  $app.innerHTML='<div class="wrap"><div class="card"><div class="eyebrow">教練版｜'+esc(m.lab)+'（'+esc(m.title)+'）　題庫 '+m.ver+'</div><h2 style="margin:6px 0 10px">'+SV.name+'問卷</h2><p class="mute" style="margin:0 0 14px">教練版含標準答案：練習時每題作答後立即顯示對錯與解析，不填基本資料、也不寫入試算表。</p><div class="row"><button class="btn" id="pr">開始練習（即時對錯與解析）</button><button class="btn ghost" id="ky">查看答案總表</button></div></div></div>';
   document.getElementById("pr").onclick=function(){ss("sdm_state",null);S=null;location.hash="practice";route();};
   document.getElementById("ky").onclick=function(){location.hash="key";};
 }
@@ -2542,7 +2545,7 @@ function viewConsole(){
   var sel=ls("sdm_sel")||{k:"adv",m:"s"};if(!BMETA[sel.k])sel={k:"adv",m:"s"};
   var url=linkOf(sel.k,sel.m),local=location.protocol==="file:",learner=sel.m==="s";
   var h='<div class="wrap wide"><div class="home"><div>'+
-   '<div class="eyebrow">B2B 決策工程學　培訓配套評量｜教練控制台</div><h1>銷售決策成熟度問卷</h1>'+
+   '<div class="eyebrow">'+SV.sub+'｜教練控制台</div><h1>'+SV.name+'問卷</h1>'+
    '<div class="sub" style="margin-bottom:14px">選擇問卷版本與對象，右側即產生 QR Code 讓學員掃描作答。</div>'+
    '<b>① 選擇版本</b><div id="vers" style="margin:8px 0 16px">';
   Object.keys(BMETA).forEach(function(k){var m=BMETA[k];h+='<button class="vc'+(sel.k===k?' on':'')+'" data-k="'+k+'"><span class="vt">'+m.lab+'（'+m.title+'）</span><span class="vl">'+m.lv+'</span><span class="vd">'+m.desc+'</span></button>';});
@@ -2567,7 +2570,7 @@ function viewConsole(){
 /* ============ 受測者資料 ============ */
 function viewInfo(){
   var i=(S&&S.info)||{};
-  $app.innerHTML='<div class="wrap"><div class="card"><div class="eyebrow">STEP 1／2　基本資料</div><h2 style="margin:6px 0 4px">銷售決策成熟度問卷</h2>'+
+  $app.innerHTML='<div class="wrap"><div class="card"><div class="eyebrow">STEP 1／2　基本資料</div><h2 style="margin:6px 0 4px">'+SV.name+'問卷</h2>'+
   '<p class="mute" style="margin:0 0 6px">請先填寫基本資料，完成後即可開始作答。所有欄位皆為必填。</p>'+
   '<form id="f" novalidate>'+
   fld("company","企業名稱","text",i.company,"organization")+fld("title","職稱","text",i.title,"organization-title")+fld("name","姓名","text",i.name,"name")+
@@ -2626,7 +2629,7 @@ function viewQuiz(){
 function score(){
   var qs={},dm={},total=0;
   BANK.forEach(function(q){var o=q.o.filter(function(x){return x.id===S.ans[q.id];})[0];var s=o?o.s:1;qs[q.id]=s;total+=s;dm[q.d]=(dm[q.d]||0)+s;});
-  var idx=Math.round((total-20)/60*1000)/10;
+  var idx=Math.round((total-SV.N)/(3*SV.N)*1000)/10;
   var lv=0;LEVELS.forEach(function(l,i){if(idx>=l.min)lv=i;});
   var dIdx={};Object.keys(DIMS).forEach(function(k){dIdx[k]=Math.round((dm[k]-2)/6*1000)/10;});
   var pIdx={};Object.keys(PILLARS).forEach(function(p){var sum=0,cnt=0;PILLARS[p].d.forEach(function(k){sum+=dm[k];cnt+=2;});pIdx[p]=Math.round((sum-cnt)/(cnt*3)*1000)/10;});
@@ -2640,10 +2643,10 @@ function finish(){
   if(secs<CONFIG.MIN_SECONDS)flags.push("作答過快（"+secs+"秒）");
   var cnt={};Object.keys(S.pos||{}).forEach(function(k){cnt[S.pos[k]]=(cnt[S.pos[k]]||0)+1;});
   var mx=0;Object.keys(cnt).forEach(function(k){mx=Math.max(mx,cnt[k]);});
-  if(mx>=15)flags.push("選項位置高度集中（"+mx+"/20）");
+  if(mx>=Math.ceil(SV.N*0.75))flags.push("選項位置高度集中（"+mx+"/"+SV.N+"）");
   if(S.bot)flags.push("疑似機器填寫");
   S.fin={secs:secs,flags:flags,at:fmtDT(new Date())};
-  S.payload={id:S.id,ts:S.fin.at,bank:BKEY,ver:CONFIG.VERSION,company:S.info.company,title:S.info.title,name:S.info.name,email:S.info.email,phone:S.info.phone,
+  S.payload={id:S.id,ts:S.fin.at,survey:SV.id,bank:BKEY,ver:CONFIG.VERSION,company:S.info.company,title:S.info.title,name:S.info.name,email:S.info.email,phone:S.info.phone,
     seconds:secs,quality:flags.join("；")||"正常",answers:S.ans,order:S.order.map(function(x){return BANK[x.qi].id;}).join(",")};
   save();viewSubmit();
 }
@@ -2674,25 +2677,25 @@ function radar(sc){
     pts.push((cx+R*v*Math.cos(a)).toFixed(1)+","+(cy+R*v*Math.sin(a)).toFixed(1));
     var lx=cx+(R+22)*Math.cos(a),ly=cy+(R+22)*Math.sin(a),an=Math.cos(a)>.3?"start":Math.cos(a)<-.3?"end":"middle";
     lab+='<text x="'+lx.toFixed(1)+'" y="'+(ly+4).toFixed(1)+'" text-anchor="'+an+'" font-size="12" fill="#222634">'+DIMS[k].n+'</text>';});
-  return '<svg viewBox="0 0 420 390" style="width:100%;max-width:440px;display:block;margin:0 auto">'+grid+'<polygon points="'+pts.join(" ")+'" fill="rgba(69,79,135,.25)" stroke="#2d3561" stroke-width="2"/>'+lab+'</svg>';
+  return '<svg viewBox="-35 0 490 390" style="width:100%;max-width:440px;display:block;margin:0 auto">'+grid+'<polygon points="'+pts.join(" ")+'" fill="rgba(69,79,135,.25)" stroke="#2d3561" stroke-width="2"/>'+lab+'</svg>';
 }
 function viewReport(){
   var r=S.result,sc=r.sc,L=LEVELS[sc.lv],keys=Object.keys(DIMS);
   var order=keys.slice().sort(function(a,b){return sc.dm[a]-sc.dm[b]||keys.indexOf(a)-keys.indexOf(b);});
   var weak=order.slice(0,3),strong=order.slice().reverse().filter(function(k){return sc.dm[k]>=6;}).slice(0,3);
   var spread=Math.max.apply(null,keys.map(function(k){return sc.dIdx[k];}))-Math.min.apply(null,keys.map(function(k){return sc.dIdx[k];}));
-  var nxt=sc.lv<3?LEVELS[sc.lv+1]:null,need=nxt?Math.ceil(20+nxt.min*0.6-1e-9)-sc.total:0;
+  var nxt=sc.lv<3?LEVELS[sc.lv+1]:null,need=nxt?Math.ceil(SV.N+nxt.min*0.03*SV.N-1e-9)-sc.total:0;
   var h='<div class="wrap wide">';
-  h+='<div class="card"><div class="eyebrow">銷售決策成熟度分析報告'+(CONFIG.BANK_NAME?'｜'+esc(CONFIG.BANK_NAME):'')+'</div><h2 style="margin:6px 0 10px">'+esc(S.info.name)+'　<span class="mute" style="font-size:16px;font-weight:500">'+esc(S.info.title)+'｜'+esc(S.info.company)+'</span></h2>'+
+  h+='<div class="card"><div class="eyebrow">'+SV.name+'分析報告'+(CONFIG.BANK_NAME?'｜'+esc(CONFIG.BANK_NAME):'')+'</div><h2 style="margin:6px 0 10px">'+esc(S.info.name)+'　<span class="mute" style="font-size:16px;font-weight:500">'+esc(S.info.title)+'｜'+esc(S.info.company)+'</span></h2>'+
    '<div class="small mute">施測時間：'+esc(r.at)+'　作答時間：'+Math.floor(r.secs/60)+' 分 '+(r.secs%60)+' 秒　題庫版本：'+CONFIG.VERSION+'</div>'+
-   (CONFIG.FEEDBACK?'<div class="str"><b>答對 '+BANK.filter(function(q){return sc.qs[q.id]===4;}).length+' ／ 20 題</b>（選到最佳答案的題數）；未答對題號（題庫編號）：'+(BANK.filter(function(q){return sc.qs[q.id]!==4;}).map(function(q){return q.id;}).join('、')||'無')+'</div>':'')+(r.flags.length?'<div class="warn">作答品質提示：'+esc(r.flags.join("；"))+'。本次結果僅供參考，建議重新施測。</div>':'')+'</div>';
+   (CONFIG.FEEDBACK?'<div class="str"><b>答對 '+BANK.filter(function(q){return sc.qs[q.id]===4;}).length+' ／ '+SV.N+' 題</b>（選到最佳答案的題數）；未答對題號（題庫編號）：'+(BANK.filter(function(q){return sc.qs[q.id]!==4;}).map(function(q){return q.id;}).join('、')||'無')+'</div>':'')+(r.flags.length?'<div class="warn">作答品質提示：'+esc(r.flags.join("；"))+'。本次結果僅供參考，建議重新施測。</div>':'')+'</div>';
   h+='<div class="card"><div class="hero"><div class="big">'+sc.idx.toFixed(1)+'<small> ／ 100</small></div><div><span class="badge" style="background:'+L.c+'">'+L.k+'　'+L.n+'</span>'+
    '<p style="margin:10px 0 0">'+L.d+'</p></div></div>'+
    '<div class="scale"><div class="pin" style="left:'+sc.idx+'%" data-v="'+sc.idx.toFixed(1)+'"></div><span class="tk" style="left:35%">35</span><span class="tk" style="left:60%">60</span><span class="tk" style="left:80%">80</span></div>'+
-   '<table><tr><th>等級</th><th>成熟度指數</th><th>原始總分（20–80）</th></tr>'+LEVELS.map(function(l,i){return '<tr'+(i===sc.lv?' style="background:#eef0f8;font-weight:700"':'')+'><td>'+l.k+'　'+l.n+'</td><td>'+l.min+(i<3?' – '+(LEVELS[i+1].min-0.1).toFixed(1):' – 100')+'</td><td>'+l.raw+'</td></tr>';}).join("")+'</table>'+
-   '<p class="small mute" style="margin:10px 0 0">計分方式：每題依選項反映的成熟度給 1–4 分，20 題合計 20–80 分，換算指數＝（總分－20）÷60×100。你的原始總分為 <b>'+sc.total+' 分</b>'+(nxt?'，距離 '+nxt.k+'（'+nxt.n+'）還差 <b>'+need+' 分</b>。':'，已達最高等級。')+'</p></div>';
-  h+='<div class="card"><h3>三大能力軸</h3><p class="small mute" style="margin:4px 0 12px">對應培訓總結：洞悉心理、降低風險、捍衛價值。</p><div class="pill3">'+Object.keys(PILLARS).map(function(p){var v=sc.pIdx[p],t=TIERS[tierOf(v)];return '<div class="p"><div class="small mute">'+PILLARS[p].n+'（'+PILLARS[p].d.length*2+' 題）</div><b>'+v.toFixed(1)+'</b> <span class="tag '+t.c+'">'+t.n+'</span><div class="bar" style="margin:8px 0"><div style="width:'+v+'%;background:var(--navy)"></div></div><div class="small mute">'+PILLARS[p].s+'</div></div>';}).join("")+'</div></div>';
-  h+='<div class="card"><h3>十大決策心理構面</h3><div class="two" style="margin-top:10px"><div>'+radar(sc)+'</div><div><table><tr><th>構面</th><th class="n">得分</th><th>指數</th><th>程度</th></tr>'+keys.map(function(k){var v=sc.dIdx[k],t=TIERS[tierOf(v)];return '<tr><td>'+DIMS[k].n+'</td><td class="n">'+sc.dm[k]+'／8</td><td><div class="bar"><div style="width:'+v+'%;background:var(--sage)"></div></div><span class="small mute">'+v.toFixed(0)+'</span></td><td><span class="tag '+t.c+'">'+t.n+'</span></td></tr>';}).join("")+'</table></div></div>'+
+   '<table><tr><th>等級</th><th>成熟度指數</th><th>原始總分（'+SV.N+'–'+SV.N*4+'）</th></tr>'+LEVELS.map(function(l,i){return '<tr'+(i===sc.lv?' style="background:#eef0f8;font-weight:700"':'')+'><td>'+l.k+'　'+l.n+'</td><td>'+l.min+(i<3?' – '+(LEVELS[i+1].min-0.1).toFixed(1):' – 100')+'</td><td>'+l.raw+'</td></tr>';}).join("")+'</table>'+
+   '<p class="small mute" style="margin:10px 0 0">計分方式：每題依選項反映的成熟度給 1–4 分，'+SV.N+' 題合計 '+SV.N+'–'+SV.N*4+' 分，換算指數＝（總分－'+SV.N+'）÷'+SV.N*3+'×100。你的原始總分為 <b>'+sc.total+' 分</b>'+(nxt?'，距離 '+nxt.k+'（'+nxt.n+'）還差 <b>'+need+' 分</b>。':'，已達最高等級。')+'</p></div>';
+  h+='<div class="card"><h3>'+SV.pilTitle+'</h3><p class="small mute" style="margin:4px 0 12px">'+SV.pilSub+'</p><div class="pill3">'+Object.keys(PILLARS).map(function(p){var v=sc.pIdx[p],t=TIERS[tierOf(v)];return '<div class="p"><div class="small mute">'+PILLARS[p].n+'（'+PILLARS[p].d.length*2+' 題）</div><b>'+v.toFixed(1)+'</b> <span class="tag '+t.c+'">'+t.n+'</span><div class="bar" style="margin:8px 0"><div style="width:'+v+'%;background:var(--navy)"></div></div><div class="small mute">'+PILLARS[p].s+'</div></div>';}).join("")+'</div></div>';
+  h+='<div class="card"><h3>'+SV.dimTitle+'</h3><div class="two" style="margin-top:10px"><div>'+radar(sc)+'</div><div><table><tr><th>構面</th><th class="n">得分</th><th>指數</th><th>程度</th></tr>'+keys.map(function(k){var v=sc.dIdx[k],t=TIERS[tierOf(v)];return '<tr><td>'+DIMS[k].n+'</td><td class="n">'+sc.dm[k]+'／8</td><td><div class="bar"><div style="width:'+v+'%;background:var(--sage)"></div></div><span class="small mute">'+v.toFixed(0)+'</span></td><td><span class="tag '+t.c+'">'+t.n+'</span></td></tr>';}).join("")+'</table></div></div>'+
    '<p class="small mute" style="margin:8px 0 0">構面指數＝（該構面2題合計－2）÷6×100。程度分級：&lt;25 待建立、25–57 發展中、58–91 熟練、≥92 精熟。最高與最低構面相差 <b>'+spread.toFixed(0)+'</b> 分，'+(spread>=60?'屬於落差明顯的「尖峰型」輪廓，建議優先補齊短板。':spread>=34?'輪廓中等起伏，仍有可優先補強的短板。':'各構面表現相對均衡。')+'</p></div>';
   h+='<div class="card"><h3>優勢與發展重點</h3>';
   h+='<h3 style="font-size:16px;margin:14px 0 4px;color:#33563f">相對優勢</h3>'+(strong.length?strong.map(function(k){return '<div class="str"><b>'+DIMS[k].n+'（'+sc.dm[k]+'／8）</b><br>'+DIMS[k].e+' 此構面表現相對穩健，可作為團隊內部的分享案例。</div>';}).join(""):'<div class="str">目前尚無得分達 6 分以上的構面，建議先從下列發展重點著手。</div>');

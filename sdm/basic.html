@@ -103,6 +103,7 @@ var CONFIG = {
   FEEDBACK: false          // true＝練習版：每題作答後立即顯示對錯、標準答案與解析
 };
 
+var SV={id:"sdm",name:"銷售決策成熟度",sub:"B2B 決策工程學　培訓配套評量",dimTitle:"十大決策心理構面",pilTitle:"三大能力軸",pilSub:"對應培訓總結：洞悉心理、降低風險、捍衛價值。",N:20};
 /* ============ 構面與三大能力軸（對應培訓資料） ============ */
 var DIMS = {
  D1:{n:"互惠原則",e:"先給價值，再談成交；用專業知識建立信任與虧欠感。",g:"一開口就索取時間、直接推型錄，或讓客戶先付出。",a:"把專業知識包裝成免費誘餌（例如針對客戶產業的健檢摘要），再提出15分鐘的具體下一步。"},
@@ -127,6 +128,13 @@ var LEVELS = [
  {k:"L3",n:"決策影響型",min:60,raw:"56–67",c:"#5f8f72",d:"能辨識決策旅程中的關鍵節點，並運用心理與風險框架影響決策；仍有個別構面不穩定，或在高壓情境下回到舊習慣。",nx:"針對低分構面做情境演練，並把成功做法沉澱成團隊可複製的話術與模板。"},
  {k:"L4",n:"決策合夥人型",min:80,raw:"68–80",c:"#2f6b4c",d:"能陪伴客戶走過充滿未知的決策深水區：洞悉人心、降低風險、捍衛價值，並與客戶形成信任循環，是客戶不易取代的決策夥伴。",nx:"建議擔任內部教練，將做法沉澱為教戰SOP，並持續檢視在大型案件中是否一致執行。"}
 ];
+var BMETA={
+ basic:{lab:"原始版",title:"共通入門版",ver:"BASIC-v1.0",lv:"入門",desc:"情境直白、重點明確，適合初次接觸 B2B 決策心理的學員暖身與觀念建立。"},
+ adv:{lab:"調整版",title:"共通進階版",ver:"ADV-v1.0",lv:"進階",desc:"選項長度拉平、誘答選項更貼近實務，能拉開學員差異並找出短板。"},
+ auto:{lab:"產業版",title:"車用零組件 OEM/ODM 版",ver:"AUTO-v1.0",lv:"進階（產業）",desc:"以 Tier 1／車廠供應鏈情境編寫，含年降、PPAP、二供、8D 等傳統製造業場景。"}
+};
+
+LEVELS.forEach(function(l,i){var lo=Math.ceil(SV.N+l.min*0.03*SV.N-1e-9),hi=i<3?Math.ceil(SV.N+LEVELS[i+1].min*0.03*SV.N-1e-9)-1:SV.N*4;l.raw=lo+"–"+hi;});
 var TIERS = [{n:"待建立",c:"t0"},{n:"發展中",c:"t1"},{n:"熟練",c:"t2"},{n:"精熟",c:"t3"}];
 
 /* ============ 題庫（題目與選項固定；s＝成熟度分數1~4） ============ */
@@ -136,11 +144,6 @@ var BANK=[],WHY={};
 var BANKS={};
 BANKS["basic"]={"bank":[{"id":1,"d":"D1","q":"你想約一位從未往來的製造業採購副總首次見面。哪一種開場最可能換到這場會議？","o":[["uy8",0,"「您好，我是○○公司業務，想花30分鐘向您介紹我們的產品與規格。」"],["9q8",0,"「您好，附上產品型錄與本月優惠價，請問您哪天方便當面報價？」"],["buk",0,"「附上一份通用的產業趨勢白皮書，若您有興趣，歡迎回信約時間。」"],["fas",0,"「王副總您好，附上針對貴產業與規模整理的免費《製程停機風險健檢摘要》，若需完整解析，下週可安排15分鐘討論。」"]]},{"id":2,"d":"D1","q":"客戶在規劃階段，問了一個與你的產品只有間接關係的技術問題。你會怎麼做？","o":[["yz6",0,"「這部分等簽約後，再由技術團隊協助說明。」"],["n8w",0,"簡短回答後，順勢詢問預算與採購時程。"],["ub4",0,"詳細回答並附上相關文件，過幾天再主動跟進。"],["cnb",0,"當場協助釐清，並整理一份可供客戶內部使用的評估清單，不附帶任何條件，再依對方反應安排下一步。"]]},{"id":3,"d":"D2","q":"客戶說：「你們這套系統我們沒用過，怕變成白老鼠。」你的最佳回應是？","o":[["d6y",0,"強調系統採用最新技術，運算速度在市場上名列前茅。"],["s3t",0,"保證若發生問題，提供一年免費維護。"],["ee8",0,"提供已導入客戶的名單與導入年數。"],["5hg",0,"說明同產業、同規模的標竿客戶已把這套架構用在核心業務上，並提議安排與其同業窗口交流。"],["up7",0,"附上第三方機構的測試報告，證明系統的穩定度。"]]},{"id":4,"d":"D2","q":"你有三個成功案例：A是知名外商（不同產業）、B是同業中小企業、C是同業龍頭。今天要向另一家「同業龍頭」簡報，你會怎麼運用？","o":[["ped",0,"三個案例平均介紹，強調案例的數量。"],["kn3",0,"以知名外商案例為主，品牌越響亮越有說服力。"],["aj5",0,"以同業中小企業案例為主，強調成本效益。"],["yy2",0,"以同業龍頭案例為主，說明與客戶規模、流程相近之處及可驗證的成效，其他案例作為補充。"]]},{"id":5,"d":"D3","q":"你要向非技術背景的總經理說明新一代系統架構，哪種做法最有效？","o":[["ccd",0,"逐項列出規格參數與效能評比表。"],["qzq",0,"請客戶的工程團隊先評估，再由他們向總經理轉述。"],["n8j",0,"先完整講解技術原理，再說明優勢。"],["mng",0,"用一張簡化示意圖說明重點，並補上主要規格摘要。"],["h58",0,"用貼近客戶業務的比喻或情境，說出「對營運的差別」，技術細節放在附件備查。"]]},{"id":6,"d":"D3","q":"你的提案簡報有30頁，客戶一開場就說：「我只有15分鐘。」你會怎麼做？","o":[["auu",0,"加快語速，盡量把30頁講完。"],["nds",0,"臨場刪成15頁，保留主要規格與報價。"],["vhq",0,"先用一頁摘要講結論與效益，其餘放附錄，視客戶提問再展開。"],["uqv",0,"以一個客戶情境的前後對比故事搭配一頁數字摘要，讓對方一分鐘內就能向主管複述。"]]},{"id":7,"d":"D4","q":"你要為客戶準備報價單，哪種呈現方式最成熟？","o":[["57d",0,"只列最低價方案，成交後再談加購。"],["xvj",0,"提供1年、2年、3年方案，請客戶自己挑選。"],["rkz",0,"先報最高階方案，再逐步降階讓客戶接受。"],["d8t",0,"提供多個方案，並標示其中最划算的一個。"],["hu2",0,"以三年期標準方案作為預設基準，附上ROI試算與理由；客戶要調整時，說明取捨與影響。"]]},{"id":8,"d":"D4","q":"客戶說：「你直接給我一個大家都能接受的版本就好。」你會怎麼做？","o":[["tzg",0,"逐項詢問客戶想要什麼，再重新報價。"],["bjy",0,"提供完整的功能清單，讓客戶自行勾選。"],["ym5",0,"提供兩個版本，請客戶比較後選擇。"],["m5e",0,"依客戶目標與風險，先擬定一個推薦的預設版本並說明取捨，客戶只需「確認或調整」。"]]},{"id":9,"d":"D5","q":"客戶比價後說：「B公司的硬體報價比你們便宜15%，你們能跟進嗎？」你的回應是？","o":[["ehf",0,"回去請示主管，盡快給出折讓。"],["3de",0,"強調我們的品質與品牌比較好。"],["5em",0,"提供更詳細的規格比較表，證明我們功能較多。"],["rbd",0,"承認價差，並提出附帶條件的折扣方案，換取客戶的承諾。"],["hws",0,"把採購價、整合、停機、教育訓練等成本一併計算，用三年TCO說明差價是否真的存在。"]]},{"id":10,"d":"D5","q":"你要說服財務長核准一筆較高的投資，最需要準備的是什麼？","o":[["zma",0,"完整的產品規格與正式報價單。"],["4ur",0,"其他客戶的使用見證與口碑。"],["syg",0,"每年可節省多少成本的估算。"],["qu7",0,"涵蓋導入期到三年的TCO與ROI模型，列明假設，並用客戶自己的數字試算。"]]},{"id":11,"d":"D6","q":"客戶對一筆1000萬元的全面導入案遲疑，說：「讓我們再想想。」你最合適的做法是？","o":[["f4n",0,"提醒優惠即將截止，請客戶盡快決定。"],["jkx",0,"約定下週再追蹤，等客戶想清楚。"],["7jy",0,"延長保固期限，降低客戶的擔心。"],["nhn",0,"提供更多資料與案例，讓客戶放心。"],["4jn",0,"提議先做範圍小、有明確成功標準的POC，驗證效益後再談擴大導入。"]]},{"id":12,"d":"D6","q":"下列哪一種POC或試用的設計最成熟？","o":[["uvh",0,"免費長期試用，直到客戶滿意為止。"],["x7q",0,"不設期限，由客戶自行評估後再回覆。"],["pgc",0,"設定固定的試用期間，結束後再洽談。"],["4wv",0,"事前約定範圍、期間、成功指標與後續決策方式，達標即進入下一階段，未達標則一起檢討。"]]},{"id":13,"d":"D7","q":"你的窗口（採購經理）很認同方案，卻遲遲不向上呈報。你判斷最可能的原因與做法是？","o":[["tyk",0,"他沒有決策權，改直接找他的高層。"],["sbt",0,"請公司主管出面拜訪他的主管。"],["5j9",0,"他缺乏動力，提高折扣促使他推動。"],["kxx",0,"多打幾通電話追蹤進度，維持對方的熱度。"],["e34",0,"判斷他擔心承擔責任，替他備妥向上報告用的One-pager（含ROI、風險對策與競品比較），讓他報告時顯得專業且有保障。"]]},{"id":14,"d":"D7","q":"委員會評審前，內部支持你的窗口問：「我要怎麼講，才不會出事？」你會怎麼做？","o":[["8ab",0,"回他：「照規格講就好。」"],["jn4",0,"把產品簡報給他，供他自行轉用。"],["vdd",0,"提供一份常見問答，由他自行運用。"],["5pc",0,"與他預演可能被質疑的問題，備妥風險說明、替代方案與退場機制，讓他在會上有據可依。"]]},{"id":15,"d":"D8","q":"客戶覺得現有系統「還過得去」，沒有汰換的急迫感。你會怎麼做？","o":[["783",0,"強調新系統可節省20%的維運成本。"],["u34",0,"提供限時優惠，錯過就恢復原價。"],["mtx",0,"邀請客戶參觀已導入的企業。"],["dsj",0,"展示新系統的亮點功能，並與現有系統逐項比較。"],["xep",0,"與客戶一起估算維持現狀的持續損失（如停機、人力、機會成本），讓對方看見「不改變」的代價。"]]},{"id":16,"d":"D8","q":"談判時要陳述方案的價值，下列哪種說法最有效？","o":[["m76",0,"「我們比現有方案多提供5項功能，而且介面更新。」"],["qak",0,"「與市場行情相比，我們的價格相當有競爭力。」"],["sze",0,"「導入後，每年可為貴公司帶來約300萬元的效益。」"],["txp",0,"「維持現狀，每年約有300萬元的隱性成本在流失且持續累積。」並附上雙方確認過的計算依據。"]]},{"id":17,"d":"D9","q":"採購對你說：「預算最多只能給到80萬，不然就不做了。」你會怎麼做？","o":[["bkg",0,"「好……那我回去請示一下主管。」立即讓步。"],["hfk",0,"立刻提出折衷報價，雙方各讓一點。"],["tym",0,"說明預算過低，強調成本已無法再降。"],["ctr",0,"先沉默3至5秒，再把問題拋回：「80萬可以做到縮小範圍的版本，我們看看預算要怎麼重新配置？」"]]},{"id":18,"d":"D9","q":"你報出價格後，客戶沉默超過10秒。你會怎麼做？","o":[["fnz",0,"立刻補充更多優點與優惠。"],["dt5",0,"立刻主動降價，打破尷尬。"],["j8a",0,"問：「您是不是覺得太貴了？」"],["3k9",0,"讓客戶先開口；必要時用一句開放式提問，把思考空間留給對方。"]]},{"id":19,"d":"D10","q":"專案導入期間，你發現進度將延遲，且部分原因出在我方。你會怎麼做？","o":[["eyq",0,"先自行處理，等客戶發現時再說明。"],["vcj",0,"向客戶說明，但把重點放在外部因素。"],["yu3",0,"請主管出面道歉，並提供折扣作為補償。"],["dka",0,"發出延遲通知，並附上補救計畫。"],["drg",0,"主動坦白原因與影響，提出幾個選項與取捨，邀請客戶共同決定下一步。"]]},{"id":20,"d":"D10","q":"客戶對你的方案提出重大質疑，而這確實是方案的弱點。你會怎麼回應？","o":[["f5s",0,"逐點反駁，說明質疑並不成立。"],["8s9",0,"淡化質疑，把話題轉回方案的優點。"],["4yj",0,"承認有限制，並承諾回去研究。"],["tde",0,"肯定質疑的價值，坦白說明適用邊界；必要時建議客戶以另一種做法達成目標，並一起評估。"]]}],"why":{},"dimsA":null};
 var DIMS_BASEA={};Object.keys(DIMS).forEach(function(k){DIMS_BASEA[k]=DIMS[k].a;});
-var BMETA={
- basic:{lab:"原始版",title:"共通入門版",ver:"BASIC-v1.0",lv:"入門",desc:"情境直白、重點明確，適合初次接觸 B2B 決策心理的學員暖身與觀念建立。"},
- adv:{lab:"調整版",title:"共通進階版",ver:"ADV-v1.0",lv:"進階",desc:"選項長度拉平、誘答選項更貼近實務，能拉開學員差異並找出短板。"},
- auto:{lab:"產業版",title:"車用零組件 OEM/ODM 版",ver:"AUTO-v1.0",lv:"進階（產業）",desc:"以 Tier 1／車廠供應鏈情境編寫，含年降、PPAP、二供、8D 等傳統製造業場景。"}
-};
 function convertBank(B){B.bank.forEach(function(q){q.o=q.o.map(function(x){return {id:x[0],s:x[1],t:x[2]};});});return B;}
 Object.keys(BANKS).forEach(function(k){convertBank(BANKS[k]);});
 
@@ -218,7 +221,7 @@ function viewGate(){
 }
 function viewCoachMenu(){
   var m=BMETA[BKEY];
-  $app.innerHTML='<div class="wrap"><div class="card"><div class="eyebrow">教練版｜'+esc(m.lab)+'（'+esc(m.title)+'）　題庫 '+m.ver+'</div><h2 style="margin:6px 0 10px">銷售決策成熟度問卷</h2><p class="mute" style="margin:0 0 14px">教練版含標準答案：練習時每題作答後立即顯示對錯與解析，不填基本資料、也不寫入試算表。</p><div class="row"><button class="btn" id="pr">開始練習（即時對錯與解析）</button><button class="btn ghost" id="ky">查看答案總表</button></div></div></div>';
+  $app.innerHTML='<div class="wrap"><div class="card"><div class="eyebrow">教練版｜'+esc(m.lab)+'（'+esc(m.title)+'）　題庫 '+m.ver+'</div><h2 style="margin:6px 0 10px">'+SV.name+'問卷</h2><p class="mute" style="margin:0 0 14px">教練版含標準答案：練習時每題作答後立即顯示對錯與解析，不填基本資料、也不寫入試算表。</p><div class="row"><button class="btn" id="pr">開始練習（即時對錯與解析）</button><button class="btn ghost" id="ky">查看答案總表</button></div></div></div>';
   document.getElementById("pr").onclick=function(){ss("sdm_state",null);S=null;location.hash="practice";route();};
   document.getElementById("ky").onclick=function(){location.hash="key";};
 }
@@ -245,7 +248,7 @@ function viewConsole(){
   var sel=ls("sdm_sel")||{k:"adv",m:"s"};if(!BMETA[sel.k])sel={k:"adv",m:"s"};
   var url=linkOf(sel.k,sel.m),local=location.protocol==="file:",learner=sel.m==="s";
   var h='<div class="wrap wide"><div class="home"><div>'+
-   '<div class="eyebrow">B2B 決策工程學　培訓配套評量｜教練控制台</div><h1>銷售決策成熟度問卷</h1>'+
+   '<div class="eyebrow">'+SV.sub+'｜教練控制台</div><h1>'+SV.name+'問卷</h1>'+
    '<div class="sub" style="margin-bottom:14px">選擇問卷版本與對象，右側即產生 QR Code 讓學員掃描作答。</div>'+
    '<b>① 選擇版本</b><div id="vers" style="margin:8px 0 16px">';
   Object.keys(BMETA).forEach(function(k){var m=BMETA[k];h+='<button class="vc'+(sel.k===k?' on':'')+'" data-k="'+k+'"><span class="vt">'+m.lab+'（'+m.title+'）</span><span class="vl">'+m.lv+'</span><span class="vd">'+m.desc+'</span></button>';});
@@ -270,7 +273,7 @@ function viewConsole(){
 /* ============ 受測者資料 ============ */
 function viewInfo(){
   var i=(S&&S.info)||{};
-  $app.innerHTML='<div class="wrap"><div class="card"><div class="eyebrow">STEP 1／2　基本資料</div><h2 style="margin:6px 0 4px">銷售決策成熟度問卷</h2>'+
+  $app.innerHTML='<div class="wrap"><div class="card"><div class="eyebrow">STEP 1／2　基本資料</div><h2 style="margin:6px 0 4px">'+SV.name+'問卷</h2>'+
   '<p class="mute" style="margin:0 0 6px">請先填寫基本資料，完成後即可開始作答。所有欄位皆為必填。</p>'+
   '<form id="f" novalidate>'+
   fld("company","企業名稱","text",i.company,"organization")+fld("title","職稱","text",i.title,"organization-title")+fld("name","姓名","text",i.name,"name")+
@@ -329,7 +332,7 @@ function viewQuiz(){
 function score(){
   var qs={},dm={},total=0;
   BANK.forEach(function(q){var o=q.o.filter(function(x){return x.id===S.ans[q.id];})[0];var s=o?o.s:1;qs[q.id]=s;total+=s;dm[q.d]=(dm[q.d]||0)+s;});
-  var idx=Math.round((total-20)/60*1000)/10;
+  var idx=Math.round((total-SV.N)/(3*SV.N)*1000)/10;
   var lv=0;LEVELS.forEach(function(l,i){if(idx>=l.min)lv=i;});
   var dIdx={};Object.keys(DIMS).forEach(function(k){dIdx[k]=Math.round((dm[k]-2)/6*1000)/10;});
   var pIdx={};Object.keys(PILLARS).forEach(function(p){var sum=0,cnt=0;PILLARS[p].d.forEach(function(k){sum+=dm[k];cnt+=2;});pIdx[p]=Math.round((sum-cnt)/(cnt*3)*1000)/10;});
@@ -343,10 +346,10 @@ function finish(){
   if(secs<CONFIG.MIN_SECONDS)flags.push("作答過快（"+secs+"秒）");
   var cnt={};Object.keys(S.pos||{}).forEach(function(k){cnt[S.pos[k]]=(cnt[S.pos[k]]||0)+1;});
   var mx=0;Object.keys(cnt).forEach(function(k){mx=Math.max(mx,cnt[k]);});
-  if(mx>=15)flags.push("選項位置高度集中（"+mx+"/20）");
+  if(mx>=Math.ceil(SV.N*0.75))flags.push("選項位置高度集中（"+mx+"/"+SV.N+"）");
   if(S.bot)flags.push("疑似機器填寫");
   S.fin={secs:secs,flags:flags,at:fmtDT(new Date())};
-  S.payload={id:S.id,ts:S.fin.at,bank:BKEY,ver:CONFIG.VERSION,company:S.info.company,title:S.info.title,name:S.info.name,email:S.info.email,phone:S.info.phone,
+  S.payload={id:S.id,ts:S.fin.at,survey:SV.id,bank:BKEY,ver:CONFIG.VERSION,company:S.info.company,title:S.info.title,name:S.info.name,email:S.info.email,phone:S.info.phone,
     seconds:secs,quality:flags.join("；")||"正常",answers:S.ans,order:S.order.map(function(x){return BANK[x.qi].id;}).join(",")};
   save();viewSubmit();
 }
@@ -377,25 +380,25 @@ function radar(sc){
     pts.push((cx+R*v*Math.cos(a)).toFixed(1)+","+(cy+R*v*Math.sin(a)).toFixed(1));
     var lx=cx+(R+22)*Math.cos(a),ly=cy+(R+22)*Math.sin(a),an=Math.cos(a)>.3?"start":Math.cos(a)<-.3?"end":"middle";
     lab+='<text x="'+lx.toFixed(1)+'" y="'+(ly+4).toFixed(1)+'" text-anchor="'+an+'" font-size="12" fill="#222634">'+DIMS[k].n+'</text>';});
-  return '<svg viewBox="0 0 420 390" style="width:100%;max-width:440px;display:block;margin:0 auto">'+grid+'<polygon points="'+pts.join(" ")+'" fill="rgba(69,79,135,.25)" stroke="#2d3561" stroke-width="2"/>'+lab+'</svg>';
+  return '<svg viewBox="-35 0 490 390" style="width:100%;max-width:440px;display:block;margin:0 auto">'+grid+'<polygon points="'+pts.join(" ")+'" fill="rgba(69,79,135,.25)" stroke="#2d3561" stroke-width="2"/>'+lab+'</svg>';
 }
 function viewReport(){
   var r=S.result,sc=r.sc,L=LEVELS[sc.lv],keys=Object.keys(DIMS);
   var order=keys.slice().sort(function(a,b){return sc.dm[a]-sc.dm[b]||keys.indexOf(a)-keys.indexOf(b);});
   var weak=order.slice(0,3),strong=order.slice().reverse().filter(function(k){return sc.dm[k]>=6;}).slice(0,3);
   var spread=Math.max.apply(null,keys.map(function(k){return sc.dIdx[k];}))-Math.min.apply(null,keys.map(function(k){return sc.dIdx[k];}));
-  var nxt=sc.lv<3?LEVELS[sc.lv+1]:null,need=nxt?Math.ceil(20+nxt.min*0.6-1e-9)-sc.total:0;
+  var nxt=sc.lv<3?LEVELS[sc.lv+1]:null,need=nxt?Math.ceil(SV.N+nxt.min*0.03*SV.N-1e-9)-sc.total:0;
   var h='<div class="wrap wide">';
-  h+='<div class="card"><div class="eyebrow">銷售決策成熟度分析報告'+(CONFIG.BANK_NAME?'｜'+esc(CONFIG.BANK_NAME):'')+'</div><h2 style="margin:6px 0 10px">'+esc(S.info.name)+'　<span class="mute" style="font-size:16px;font-weight:500">'+esc(S.info.title)+'｜'+esc(S.info.company)+'</span></h2>'+
+  h+='<div class="card"><div class="eyebrow">'+SV.name+'分析報告'+(CONFIG.BANK_NAME?'｜'+esc(CONFIG.BANK_NAME):'')+'</div><h2 style="margin:6px 0 10px">'+esc(S.info.name)+'　<span class="mute" style="font-size:16px;font-weight:500">'+esc(S.info.title)+'｜'+esc(S.info.company)+'</span></h2>'+
    '<div class="small mute">施測時間：'+esc(r.at)+'　作答時間：'+Math.floor(r.secs/60)+' 分 '+(r.secs%60)+' 秒　題庫版本：'+CONFIG.VERSION+'</div>'+
-   (CONFIG.FEEDBACK?'<div class="str"><b>答對 '+BANK.filter(function(q){return sc.qs[q.id]===4;}).length+' ／ 20 題</b>（選到最佳答案的題數）；未答對題號（題庫編號）：'+(BANK.filter(function(q){return sc.qs[q.id]!==4;}).map(function(q){return q.id;}).join('、')||'無')+'</div>':'')+(r.flags.length?'<div class="warn">作答品質提示：'+esc(r.flags.join("；"))+'。本次結果僅供參考，建議重新施測。</div>':'')+'</div>';
+   (CONFIG.FEEDBACK?'<div class="str"><b>答對 '+BANK.filter(function(q){return sc.qs[q.id]===4;}).length+' ／ '+SV.N+' 題</b>（選到最佳答案的題數）；未答對題號（題庫編號）：'+(BANK.filter(function(q){return sc.qs[q.id]!==4;}).map(function(q){return q.id;}).join('、')||'無')+'</div>':'')+(r.flags.length?'<div class="warn">作答品質提示：'+esc(r.flags.join("；"))+'。本次結果僅供參考，建議重新施測。</div>':'')+'</div>';
   h+='<div class="card"><div class="hero"><div class="big">'+sc.idx.toFixed(1)+'<small> ／ 100</small></div><div><span class="badge" style="background:'+L.c+'">'+L.k+'　'+L.n+'</span>'+
    '<p style="margin:10px 0 0">'+L.d+'</p></div></div>'+
    '<div class="scale"><div class="pin" style="left:'+sc.idx+'%" data-v="'+sc.idx.toFixed(1)+'"></div><span class="tk" style="left:35%">35</span><span class="tk" style="left:60%">60</span><span class="tk" style="left:80%">80</span></div>'+
-   '<table><tr><th>等級</th><th>成熟度指數</th><th>原始總分（20–80）</th></tr>'+LEVELS.map(function(l,i){return '<tr'+(i===sc.lv?' style="background:#eef0f8;font-weight:700"':'')+'><td>'+l.k+'　'+l.n+'</td><td>'+l.min+(i<3?' – '+(LEVELS[i+1].min-0.1).toFixed(1):' – 100')+'</td><td>'+l.raw+'</td></tr>';}).join("")+'</table>'+
-   '<p class="small mute" style="margin:10px 0 0">計分方式：每題依選項反映的成熟度給 1–4 分，20 題合計 20–80 分，換算指數＝（總分－20）÷60×100。你的原始總分為 <b>'+sc.total+' 分</b>'+(nxt?'，距離 '+nxt.k+'（'+nxt.n+'）還差 <b>'+need+' 分</b>。':'，已達最高等級。')+'</p></div>';
-  h+='<div class="card"><h3>三大能力軸</h3><p class="small mute" style="margin:4px 0 12px">對應培訓總結：洞悉心理、降低風險、捍衛價值。</p><div class="pill3">'+Object.keys(PILLARS).map(function(p){var v=sc.pIdx[p],t=TIERS[tierOf(v)];return '<div class="p"><div class="small mute">'+PILLARS[p].n+'（'+PILLARS[p].d.length*2+' 題）</div><b>'+v.toFixed(1)+'</b> <span class="tag '+t.c+'">'+t.n+'</span><div class="bar" style="margin:8px 0"><div style="width:'+v+'%;background:var(--navy)"></div></div><div class="small mute">'+PILLARS[p].s+'</div></div>';}).join("")+'</div></div>';
-  h+='<div class="card"><h3>十大決策心理構面</h3><div class="two" style="margin-top:10px"><div>'+radar(sc)+'</div><div><table><tr><th>構面</th><th class="n">得分</th><th>指數</th><th>程度</th></tr>'+keys.map(function(k){var v=sc.dIdx[k],t=TIERS[tierOf(v)];return '<tr><td>'+DIMS[k].n+'</td><td class="n">'+sc.dm[k]+'／8</td><td><div class="bar"><div style="width:'+v+'%;background:var(--sage)"></div></div><span class="small mute">'+v.toFixed(0)+'</span></td><td><span class="tag '+t.c+'">'+t.n+'</span></td></tr>';}).join("")+'</table></div></div>'+
+   '<table><tr><th>等級</th><th>成熟度指數</th><th>原始總分（'+SV.N+'–'+SV.N*4+'）</th></tr>'+LEVELS.map(function(l,i){return '<tr'+(i===sc.lv?' style="background:#eef0f8;font-weight:700"':'')+'><td>'+l.k+'　'+l.n+'</td><td>'+l.min+(i<3?' – '+(LEVELS[i+1].min-0.1).toFixed(1):' – 100')+'</td><td>'+l.raw+'</td></tr>';}).join("")+'</table>'+
+   '<p class="small mute" style="margin:10px 0 0">計分方式：每題依選項反映的成熟度給 1–4 分，'+SV.N+' 題合計 '+SV.N+'–'+SV.N*4+' 分，換算指數＝（總分－'+SV.N+'）÷'+SV.N*3+'×100。你的原始總分為 <b>'+sc.total+' 分</b>'+(nxt?'，距離 '+nxt.k+'（'+nxt.n+'）還差 <b>'+need+' 分</b>。':'，已達最高等級。')+'</p></div>';
+  h+='<div class="card"><h3>'+SV.pilTitle+'</h3><p class="small mute" style="margin:4px 0 12px">'+SV.pilSub+'</p><div class="pill3">'+Object.keys(PILLARS).map(function(p){var v=sc.pIdx[p],t=TIERS[tierOf(v)];return '<div class="p"><div class="small mute">'+PILLARS[p].n+'（'+PILLARS[p].d.length*2+' 題）</div><b>'+v.toFixed(1)+'</b> <span class="tag '+t.c+'">'+t.n+'</span><div class="bar" style="margin:8px 0"><div style="width:'+v+'%;background:var(--navy)"></div></div><div class="small mute">'+PILLARS[p].s+'</div></div>';}).join("")+'</div></div>';
+  h+='<div class="card"><h3>'+SV.dimTitle+'</h3><div class="two" style="margin-top:10px"><div>'+radar(sc)+'</div><div><table><tr><th>構面</th><th class="n">得分</th><th>指數</th><th>程度</th></tr>'+keys.map(function(k){var v=sc.dIdx[k],t=TIERS[tierOf(v)];return '<tr><td>'+DIMS[k].n+'</td><td class="n">'+sc.dm[k]+'／8</td><td><div class="bar"><div style="width:'+v+'%;background:var(--sage)"></div></div><span class="small mute">'+v.toFixed(0)+'</span></td><td><span class="tag '+t.c+'">'+t.n+'</span></td></tr>';}).join("")+'</table></div></div>'+
    '<p class="small mute" style="margin:8px 0 0">構面指數＝（該構面2題合計－2）÷6×100。程度分級：&lt;25 待建立、25–57 發展中、58–91 熟練、≥92 精熟。最高與最低構面相差 <b>'+spread.toFixed(0)+'</b> 分，'+(spread>=60?'屬於落差明顯的「尖峰型」輪廓，建議優先補齊短板。':spread>=34?'輪廓中等起伏，仍有可優先補強的短板。':'各構面表現相對均衡。')+'</p></div>';
   h+='<div class="card"><h3>優勢與發展重點</h3>';
   h+='<h3 style="font-size:16px;margin:14px 0 4px;color:#33563f">相對優勢</h3>'+(strong.length?strong.map(function(k){return '<div class="str"><b>'+DIMS[k].n+'（'+sc.dm[k]+'／8）</b><br>'+DIMS[k].e+' 此構面表現相對穩健，可作為團隊內部的分享案例。</div>';}).join(""):'<div class="str">目前尚無得分達 6 分以上的構面，建議先從下列發展重點著手。</div>');
