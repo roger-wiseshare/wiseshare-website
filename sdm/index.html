@@ -2668,7 +2668,7 @@ function send(){
    .then(function(j){
      if(j&&j.ok&&j.result){S.result={sc:j.result,secs:S.fin.secs,flags:S.fin.flags,at:S.fin.at,status:"ok"};S.done=true;save();viewReport();}
      else throw new Error((j&&j.error)||"bad");})
-   .catch(function(){showErr("資料傳送失敗，請檢查網路後重新送出。");});
+   .catch(function(e){var m=(e&&e.message)||"";showErr("資料傳送失敗，請檢查網路後重新送出。"+(m&&m!=="bad"?"（錯誤代碼："+m.slice(0,120)+"）":""));});
 }
 
 /* ============ 報告 ============ */
