@@ -309,7 +309,7 @@ function viewQuiz(){
   var L="ABCDE";
   var h='<div class="wrap">'+(CONFIG.FEEDBACK?'<div class="warn" style="margin:0 0 10px">教練版：每題作答後會立即顯示對錯、標準答案與解析，作答後不可更改，成績不寫入試算表。</div>':'')+'<div class="row" style="justify-content:space-between"><span class="small mute">第 '+(c+1)+' ／ '+n+' 題</span><span class="small mute">已作答 '+Object.keys(S.ans).length+' 題</span></div>'+
    '<div class="prog"><div style="width:'+(Object.keys(S.ans).length/n*100)+'%"></div></div>'+
-   '<div class="card" style="margin-top:14px"><span class="qtag">情境 '+(c+1)+'</span><div class="qtext">'+esc(q.q)+'</div><div id="opts">';
+   '<div class="card" style="margin-top:14px"><span class="qtag">情境 '+(c+1)+'｜'+esc(DIMS[q.d].n)+'</span><div class="qtext">'+esc(q.q)+'</div><div id="opts">';
   var fb=CONFIG.FEEDBACK&&sel,chosen=null;
   q.o.forEach(function(x){if(x.id===sel)chosen=x;});
   it.opts.forEach(function(oi,pos){var o=q.o[oi],cl="";
