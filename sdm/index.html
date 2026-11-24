@@ -2457,9 +2457,12 @@ function fmtDT(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDa
 
 /* 每次啟動重新排序：題序與選項序皆隨機；盡量避免同構面的題目相鄰 */
 function buildOrder(){
+  /* 每次從題庫「每個構面隨機抽 2 題」，再隨機排序與重排選項 */
+  var by={};BANK.forEach(function(q,i){(by[q.d]=by[q.d]||[]).push(i);});
+  var pick=[];Object.keys(by).forEach(function(d){pick=pick.concat(shuffle(by[d]).slice(0,2));});
   var best=null;
   for(var t=0;t<300;t++){
-    var qs=shuffle(BANK.map(function(q,i){return i;})),bad=0;
+    var qs=shuffle(pick),bad=0;
     for(var i=1;i<qs.length;i++)if(BANK[qs[i]].d===BANK[qs[i-1]].d)bad++;
     if(!best||bad<best.bad)best={qs:qs,bad:bad};
     if(bad===0)break;
@@ -2525,7 +2528,7 @@ function viewCoachMenu(){
 function viewKey(k){
   var B=BANKS[k],m=BMETA[k];
   var h='<div class="wrap wide"><div class="row noprint" style="justify-content:space-between;margin-bottom:10px"><button class="btn ghost" id="back">← 回到教練選單</button><button class="btn" id="prt">列印／另存PDF</button></div>'+
-   '<div class="card"><div class="eyebrow">教練專用｜答案總表</div><h2 style="margin:6px 0 6px">'+esc(m.lab)+'（'+esc(m.title)+'）　題庫 '+m.ver+'</h2><p class="small mute" style="margin:0">題號為題庫固定編號（學員作答時題序與選項序會隨機排列）。每題以 4 分為標準答案；3 分表示方向正確但不是最佳做法。</p></div>';
+   '<div class="card"><div class="eyebrow">教練專用｜答案總表</div><h2 style="margin:6px 0 6px">'+esc(m.lab)+'（'+esc(m.title)+'）　題庫 '+m.ver+'</h2><p class="small mute" style="margin:0">題庫共 '+B.bank.length+' 題，每次作答會從每個構面隨機抽 2 題（共 '+SV.N+' 題），題號為題庫固定編號。每題以 4 分為標準答案；3 分表示方向正確但不是最佳做法。</p></div>';
   B.bank.forEach(function(q){
     var os=q.o.slice().sort(function(a,b){return b.s-a.s;});
     h+='<div class="card" style="break-inside:avoid"><span class="qtag">第 '+q.id+' 題｜'+esc(DIMS[q.d].n)+'</span><div class="qtext" style="font-size:17px">'+esc(q.q)+'</div>';
@@ -2628,7 +2631,7 @@ function viewQuiz(){
 /* ============ 計分 ============ */
 function score(){
   var qs={},dm={},total=0;
-  BANK.forEach(function(q){var o=q.o.filter(function(x){return x.id===S.ans[q.id];})[0];var s=o?o.s:1;qs[q.id]=s;total+=s;dm[q.d]=(dm[q.d]||0)+s;});
+  S.order.forEach(function(it){var q=BANK[it.qi];var o=q.o.filter(function(x){return x.id===S.ans[q.id];})[0];var s=o?o.s:1;qs[q.id]=s;total+=s;dm[q.d]=(dm[q.d]||0)+s;});
   var idx=Math.round((total-SV.N)/(3*SV.N)*1000)/10;
   var lv=0;LEVELS.forEach(function(l,i){if(idx>=l.min)lv=i;});
   var dIdx={};Object.keys(DIMS).forEach(function(k){dIdx[k]=Math.round((dm[k]-2)/6*1000)/10;});
