@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meowdoko 喵數獨</title>
+<style>:root{
+  --bg:#fff6ea; --ink:#4a3a35; --soft:#8a756b; --card:#ffffff; --accent:#ff8fa3; --accent2:#ffb703;
+  --line:#5b4339; --shadow:0 6px 18px rgba(120,80,50,.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Microsoft JhengHei","Noto Sans TC","PingFang TC",system-ui,sans-serif;overflow:hidden}
+#app{position:relative;height:100%;max-width:640px;margin:0 auto}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;padding:18px 16px;overflow:auto}
+.screen.active{display:flex}
+h1{font-size:44px;margin:6px 0 0;letter-spacing:2px;color:#e76f51}
+h2{margin:8px 0}
+.sub{margin:4px 0 0;color:var(--soft)}
+.logo{text-align:center;margin-top:3vh}
+#logoCat svg{width:130px;height:130px;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px) rotate(2deg)}}
+.menu-btns{display:flex;flex-direction:column;gap:12px;width:min(340px,100%);margin-top:3vh}
+button{font:inherit;color:inherit;cursor:pointer;border:0}
+button.big{padding:14px 18px;font-size:18px;font-weight:700;border-radius:16px;background:var(--card);
+  box-shadow:var(--shadow);transition:transform .08s}
+button.big:active{transform:scale(.97)}
+button.big.primary{background:linear-gradient(135deg,#ff9f80,#ff8fa3);color:#fff}
+button.big.ghost{background:transparent;box-shadow:none;color:var(--soft)}
+.foot{margin-top:auto;color:var(--soft);font-size:14px}
+.back{align-self:flex-start;background:none;font-size:18px;color:var(--soft);padding:6px 8px}
+.hint-text{color:var(--soft);font-size:14px;text-align:center}
+.size-list{display:flex;flex-direction:column;gap:12px;width:min(340px,100%);margin-top:12px}
+.size-list button{display:flex;justify-content:space-between;align-items:center}
+.size-list small{font-weight:400;color:var(--soft)}
+
+/* 遊戲 */
+#game{padding:10px 12px;justify-content:flex-start}
+.topbar{display:flex;align-items:center;width:100%;gap:8px}
+.topbar .title{flex:1;text-align:center;font-weight:800;font-size:20px;line-height:1.1}
+.topbar small{display:block;font-weight:500;color:var(--soft);font-size:13px}
+.icon{width:42px;height:42px;border-radius:12px;background:var(--card);font-size:26px;box-shadow:var(--shadow)}
+.timer{width:70px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--soft)}
+.lives{display:flex;gap:8px;margin:8px 0;height:30px}
+.lives .fish{font-size:26px;transition:transform .3s,opacity .3s}
+.lives .fish.lost{opacity:.18;filter:grayscale(1);transform:scale(.8)}
+#boardWrap{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
+#board{display:grid;box-sizing:border-box;background:var(--line);border:3px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
+.cell{position:relative;overflow:hidden;min-width:0;min-height:0;cursor:pointer}
+.cell svg{position:absolute;left:50%;top:50%;width:calc(var(--cs) * .8);height:calc(var(--cs) * .8);
+  margin:calc(var(--cs) * -.4) 0 0 calc(var(--cs) * -.4);pointer-events:none}
+.cell svg.xmark{width:calc(var(--cs) * .38);height:calc(var(--cs) * .38);
+  margin:calc(var(--cs) * -.19) 0 0 calc(var(--cs) * -.19)}
+.cell.cat svg{animation:pop .22s ease-out}
+@keyframes pop{0%{transform:scale(.2)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.cell.wrong{animation:shake .4s}
+@keyframes shake{20%{transform:translateX(-5px);background:#f66}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}}
+.cell.hintcell{outline:3px solid var(--accent2);outline-offset:-3px;z-index:2}
+.toolbar{display:flex;gap:8px;width:100%;margin-top:8px}
+.toolbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;
+  background:var(--card);border-radius:14px;box-shadow:var(--shadow);font-size:13px;font-weight:700}
+.toolbar button i{font-style:normal;font-size:20px}
+.toolbar button:disabled{opacity:.4}
+.tip{margin:8px 0 2px;color:var(--soft);font-size:13px}
+
+/* 彈窗 */
+.modal{position:absolute;inset:0;background:rgba(60,40,30,.5);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}
+.modal.show{display:flex}
+.card{background:var(--card);border-radius:22px;padding:22px;width:min(420px,100%);box-shadow:var(--shadow);max-height:92%;overflow:auto}
+.card.center{text-align:center}
+.card ol{padding-left:20px;line-height:1.7}
+kbd{background:#eee;border-radius:4px;padding:1px 6px;border:1px solid #ccc}
+#endCat svg{width:110px;height:110px}
+.end-btns{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+#confetti{position:absolute;inset:0;pointer-events:none;z-index:20;width:100%;height:100%}
+
+.icon.small{width:38px;height:38px;font-size:18px}
+.praise{position:absolute;transform:translate(-50%,0);z-index:15;pointer-events:none;white-space:nowrap;
+  font-weight:900;font-size:26px;color:#ff5d8f;-webkit-text-stroke:5px #fff;paint-order:stroke fill;
+  text-shadow:0 3px 8px rgba(120,60,60,.3);animation:praiseUp 1.1s ease-out forwards}
+@keyframes praiseUp{0%{opacity:0;transform:translate(-50%,10px) scale(.6)}15%{opacity:1;transform:translate(-50%,-6px) scale(1.15)}
+  70%{opacity:1;transform:translate(-50%,-34px) scale(1)}100%{opacity:0;transform:translate(-50%,-54px) scale(1)}}
+
+.rules{margin:4px 2px 0;font-size:13px;line-height:1.45;color:var(--soft);text-align:center}
+.rules b{color:var(--ink)}
+.lives .fish{display:flex;align-items:center}
+.lives .fish svg{width:40px;height:29px}
+.lives{margin:6px 0}
+.reason{width:100%;height:76px;margin-top:8px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.6);
+  font-size:13.5px;line-height:1.5;color:var(--soft);overflow:auto;display:flex;align-items:center}
+.reason.on{background:#fff3c4;color:var(--ink);box-shadow:0 0 0 2px #ffb703 inset}
+.xmark.ghost path{stroke:#ff6b35;stroke-width:3.4}
+.xmark.ghost{animation:ghostpulse .9s ease-in-out infinite}
+@keyframes ghostpulse{50%{opacity:.35}}
+
+/* ---- 舞台：左＝積分、中＝棋盤、右＝難易度 ---- */
+#stage{flex:1;display:flex;align-items:stretch;gap:6px;width:100%;min-height:0}
+#sideL,#sideR{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;gap:8px}
+#sideL{width:58px}
+#sideR{width:78px}
+.sbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:9px 2px;
+  border-radius:14px;font-weight:800;font-size:15px;color:#fff;box-shadow:var(--shadow);border:2px solid transparent;line-height:1.15}
+.sbtn small{font-size:10.5px;font-weight:600;opacity:.92;white-space:nowrap}
+.sbtn:active{transform:scale(.96)}
+.diff[data-diff=easy]{background:#5fbf72}
+.diff[data-diff=normal]{background:#4a9be0}
+.diff[data-diff=hard]{background:#f29b2f}
+.diff[data-diff=extreme]{background:#d9452c}
+.diff:not(.sel){opacity:.5;filter:saturate(.7)}
+.diff.sel{border-color:var(--ink);box-shadow:0 0 0 2px #fff,0 4px 12px rgba(0,0,0,.3);transform:scale(1.04)}
+.start{margin-top:6px;padding:13px 2px;font-size:15px;background:linear-gradient(160deg,#a259ff,#6a1fd1);letter-spacing:1px}
+.score{background:#fff3c4;color:#8a5a00;border-color:#ffb703;padding:12px 2px}
+.score .ico{font-size:24px}
+.score b{font-size:19px;color:#b26a00}
+.score small{color:#8a5a00}
+
+#idleMsg{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;text-align:center;
+  font-weight:800;font-size:16px;line-height:1.6;color:var(--ink);background:rgba(255,255,255,.92);
+  padding:12px 16px;border-radius:14px;box-shadow:var(--shadow);pointer-events:none}
+#boardWrap.idle #idleMsg{display:block}
+.cell.idle{background:#f3e6d4;cursor:default}
+
+/* ---- 工具列（四顆）---- */
+.toolbar button small{font-size:11px;font-weight:600;color:var(--soft)}
+.toolbar .where{background:#7c5cff;color:#fff}
+.toolbar .where small{color:#e6deff}
+.toolbar button:disabled{opacity:.4;cursor:not-allowed}
+.toolbar button.insufficient:disabled{opacity:1;filter:brightness(.42) saturate(.45)}   /* 積分不足 → 顏色變暗 */
+.cell.wherecell{outline:3px solid #7c5cff;outline-offset:-3px;z-index:2}
+.cell svg.ghostanimal{opacity:.5;animation:ghostpulse 1s ease-in-out infinite}
+
+/* ---- 積分視窗 ---- */
+.bigscore{text-align:center;margin:4px 0 10px}
+.bigscore b{font-size:48px;color:#b26a00}
+.bigscore span{font-size:18px;margin-left:4px}
+.stat{width:100%;border-collapse:collapse;font-size:14px}
+.stat th,.stat td{padding:6px 4px;border-bottom:1px solid #eee;text-align:center}
+.stat th{color:var(--soft);font-weight:600}
+h3{margin:14px 0 4px;font-size:15px}
+.log{list-style:none;margin:0;padding:0;max-height:180px;overflow:auto;font-size:13.5px}
+.log li{display:flex;gap:8px;align-items:center;padding:5px 2px;border-bottom:1px solid #f3eee8}
+.log li .t{color:var(--soft);font-variant-numeric:tabular-nums;width:86px}
+.log li span:nth-child(2){flex:1}
+.log .plus{color:#1f9d55}.log .minus{color:#d9452c}.log .empty{color:var(--soft);justify-content:center}
+
+@media (max-width:440px){
+  #sideL{width:48px}#sideR{width:68px}.sbtn{font-size:13.5px}.sbtn small{font-size:9.5px}.score .ico{font-size:20px}
+}
+
+/* 左欄：積分與開始遊戲，兩顆形狀相同 */
+#sideL{width:68px}
+#sideL .sbtn{height:84px;padding:6px 2px;border-radius:14px;margin:0;font-size:16px}
+#sideL .sbtn .ico{font-size:24px;line-height:1}
+#sideL .sbtn b{font-size:19px;line-height:1.1}
+#sideL .sbtn small{font-size:11px}
+.start{color:#fff}.start b{color:#fff}
+.score{border-width:2px}
+@media (max-width:440px){#sideL{width:58px}#sideL .sbtn{height:76px}#sideL .sbtn b{font-size:17px}}
+
+.diff{cursor:default}
+.lives.many .fish svg{width:30px;height:22px}
+.lives{flex-wrap:wrap;justify-content:center;height:auto;min-height:30px}
+#idleMsg{font-size:14px;width:84%;padding:10px 8px;line-height:1.55}
+.diff small{white-space:normal;line-height:1.25}
+
+/* 本盤動物名冊 */
+.roster{display:flex;gap:4px;justify-content:center;align-items:center;height:30px;margin:0 0 4px;width:100%}
+.roster .rp{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 1.5px rgba(91,67,57,.45);transition:opacity .25s,filter .25s}
+.roster .rp svg{width:22px;height:22px}
+.roster .rp.done{opacity:.22;filter:grayscale(1) brightness(.6)}
+
+/* 微調：動物列縮小、棋盤下移、提示欄兩行 */
+.roster{height:24px;gap:3px;margin:0 0 2px}
+.roster .rp{width:22px;height:22px}
+.roster .rp svg{width:17px;height:17px}
+#boardWrap{padding-top:28px}
+.reason{height:42px;padding:3px 10px;font-size:12px;line-height:1.4;margin-top:6px}
+
+/* 金魚縮小；棋盤區不可蓋住提示欄 */
+.lives .fish svg{width:30px;height:22px}
+.lives.many .fish svg{width:24px;height:18px}
+.lives{margin:3px 0;min-height:22px}
+#stage{overflow:hidden}
+#boardWrap{box-sizing:border-box;overflow:hidden}
+.reason,.toolbar,.tip{flex-shrink:0}
+
+/* 再微調：金魚略放大、棋盤略上移 */
+.lives .fish svg{width:35px;height:25px}
+.lives.many .fish svg{width:27px;height:20px}
+.lives{min-height:26px}
+#boardWrap{padding-top:14px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 主選單 -->
+  <section id="menu" class="screen active">
+    <div class="logo">
+      <div id="logoCat"></div>
+      <h1>Meowdoko</h1>
+      <p class="sub">喵數獨・動物邏輯益智遊戲</p>
+    </div>
+    <div class="menu-btns">
+      <button id="btnPlay" class="big primary">🎮 開始遊戲</button>
+      <button id="btnHow" class="big ghost">❓ 遊戲說明</button>
+    </div>
+    <p class="foot">積分 <b id="statPoints">0</b>　｜　累計完成 <b id="statCleared">0</b> 盤</p>
+  </section>
+
+  <!-- 遊戲畫面 -->
+  <section id="game" class="screen">
+    <header class="topbar">
+      <button id="btnBack" class="icon" title="返回選單">‹</button>
+      <div class="title"><span id="gTitle">選擇難易度</span><small id="gSub"></small></div>
+      <div class="timer" id="gTimer">00:00</div>
+      <button id="btnVoice" class="icon small" title="讚美語音">🔊</button>
+    </header>
+    <p class="rules" id="rulesText"><b>規則</b>：每一列、每一欄、每個色塊各放<b>一隻</b>動物，任兩隻<b>不能相鄰</b>（斜角也不行）。放錯位置會失去一條金魚。</p>
+    <div class="lives" id="lives" title="生命值：放錯位置會失去一條金魚"></div>
+    <div class="roster" id="roster" title="本盤要放的動物：放好一隻，對應顏色的那隻就變暗"></div>
+
+    <div id="stage">
+      <aside id="sideL">
+        <button id="btnScore" class="sbtn score" title="我的積分與紀錄"><span class="ico">🏆</span><b id="scoreNum">0</b><small>積分</small></button>
+        <button id="btnStart" class="sbtn start"><span class="ico">▶</span><b>開始</b><small>遊戲</small></button>
+      </aside>
+      <div id="boardWrap"><div id="board"></div><div id="idleMsg">選好難易度<br>按「開始遊戲」</div></div>
+      <aside id="sideR">
+        <button class="sbtn diff" data-diff="easy"><span>容易</span><small>5×5<br>1分×金魚</small></button>
+        <button class="sbtn diff sel" data-diff="normal"><span>一般</span><small>7×7<br>3分×金魚</small></button>
+        <button class="sbtn diff" data-diff="hard"><span>困難</span><small>8×8<br>5分×金魚</small></button>
+        <button class="sbtn diff" data-diff="extreme"><span>極難</span><small>9×9<br>10分×金魚</small></button>
+      </aside>
+    </div>
+
+    <div id="hintReason" class="reason"></div>
+    <footer class="toolbar">
+      <button id="btnUndo"><i>↶</i><span>復原</span></button>
+      <button id="btnHint"><i>💡</i><span>提示</span><small id="hintSub">剩 3 次</small></button>
+      <button id="btnRestart"><i>⟲</i><span>重來</span></button>
+      <button id="btnWhere" class="where"><i>🐱</i><span>放哪兒？</span><small id="whereSub">僅 1 次</small></button>
+    </footer>
+    <p class="tip" id="tipText">點一下標記 ✕，再點一下放動物，第三下清除</p>
+  </section>
+
+  <!-- 說明 -->
+  <div id="modalHow" class="modal">
+    <div class="card">
+      <h2>怎麼玩？</h2>
+      <ol>
+        <li>每一<b>列</b>、每一<b>欄</b>、每一個<b>顏色區塊</b>，都要剛好放<b>一隻動物</b>（每一盤的動物都不一樣）。</li>
+        <li>動物們很孤僻：任兩隻<b>不能相鄰</b>，連斜角也不行。</li>
+        <li><b>難易度由積分決定</b>（右邊亮起的就是目前等級），按下<b>「開始遊戲」</b>才會開始計時。</li>
+        <li>點格子一下標記 ✕，再點一下放動物，第三下清除。放錯位置會失去一條<b>金魚</b>，金魚用完就失敗（初始 3 條）。金魚下方一排小動物是本盤要放的數量，放好一隻，對應顏色的那隻就變暗。</li>
+        <li><b>積分</b>：通關得分＝難度基本分 × 剩下的金魚數。基本分：「容易」1、「一般」3、「困難」5、「極難」10；例如「一般」剩 2 條金魚＝3 × 2 ＝ 6 分。</li>
+        <li><b>提示</b>：指出哪一格該標 ✕ 並說明原因。每盤前 3 次免費，之後每次扣 2 分。</li>
+        <li><b>放哪兒？</b>：指出一隻動物可以放哪裡。每盤僅 1 次免費，之後每次扣 5 分。</li>
+        <li><b>晉級／退級</b>：積分超過 30 分晉級「一般」、超過 80 分晉級「困難」、超過 150 分晉級「極難」（151～300 分都是「極難」），再多就不再升級；每晉級一次，金魚多 1 條（3 → 4 → 5 → 6）。積分回到門檻（含）以下就退回前一級。</li>
+        <li>積分不夠時，按鈕會變暗不能按。</li>
+      </ol>
+      <p class="hint-text">鍵盤：<kbd>Z</kbd> 復原　<kbd>H</kbd> 提示　<kbd>R</kbd> 重來　<kbd>Esc</kbd> 返回</p>
+      <button class="big primary" data-close>我懂了！</button>
+    </div>
+  </div>
+
+  <!-- 積分紀錄 -->
+  <div id="modalScore" class="modal">
+    <div class="card">
+      <h2>🏆 我的積分</h2>
+      <div class="bigscore"><b id="msTotal">0</b><span>分</span></div>
+      <table class="stat"><thead><tr><th>難易度</th><th>通關盤數</th><th>獲得積分</th></tr></thead><tbody id="msStats"></tbody></table>
+      <h3>最近紀錄</h3>
+      <ul id="msLog" class="log"></ul>
+      <p class="hint-text">積分只存在這個瀏覽器裡。</p>
+      <button class="big primary" data-close>關閉</button>
+    </div>
+  </div>
+
+  <!-- 確認 -->
+  <div id="modalConfirm" class="modal">
+    <div class="card center">
+      <h2>放棄這一盤？</h2>
+      <p>目前這盤還沒完成，開始新遊戲會放棄它（不扣分）。</p>
+      <div class="end-btns">
+        <button id="confirmYes" class="big primary">開始新遊戲</button>
+        <button class="big" data-close>繼續目前這盤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 結果 -->
+  <div id="modalEnd" class="modal">
+    <div class="card center">
+      <div id="endCat"></div>
+      <h2 id="endTitle"></h2>
+      <p id="endMsg"></p>
+      <div class="end-btns" id="endBtns"></div>
+    </div>
+  </div>
+
+  <canvas id="confetti"></canvas>
+</div>
+<script>window.MEOW_BANK={"5":[{"r":"0022203211332213442434444","s":"14203"},{"r":"0222200112111123344233342","s":"02413"},{"r":"0022222212244132411324444","s":"13042"},{"r":"3300031110312203420034444","s":"41302"},{"r":"0002211002100423304234444","s":"20413"},{"r":"0111100010420004220344433","s":"03142"},{"r":"1100011220212002223324444","s":"30241"},{"r":"0014400114233342333422444","s":"13024"},{"r":"1100310003142031420344333","s":"30241"},{"r":"1100012200112331122344333","s":"30241"},{"r":"1110010003122334222344333","s":"30241"},{"r":"1100031020333203422434444","s":"41302"},{"r":"1110010003112231423344443","s":"30241"},{"r":"0000133211322143341434444","s":"14203"},{"r":"0011130001322113321134444","s":"14203"},{"r":"2001122011322243442433444","s":"14203"}],"6":[{"r":"330222132222133324133224553224555555","s":"204153"},{"r":"004444002411022413002433222434522444","s":"142530"},{"r":"000000011120444120334222444442455522","s":"524031"},{"r":"011111001155221155222553244455444455","s":"031524"},{"r":"110002110202110202310222310524555544","s":"413052"},{"r":"000011033331002232022232452222455522","s":"152403"},{"r":"000011002011402231400231455221445511","s":"152403"},{"r":"000001000331422231423331444341554444","s":"351420"},{"r":"230001233311223115523445522445555555","s":"350241"},{"r":"100000111102133002534002534422544444","s":"425130"},{"r":"100000101110111222112233442553422555","s":"203514"},{"r":"111100131002131002334022444424455444","s":"425031"},{"r":"221100211103221133411333444343554443","s":"531420"},{"r":"000221030211334214344414544444554444","s":"253041"},{"r":"000003221133255135445535444555444445","s":"130425"},{"r":"111100111111223341243341544441554444","s":"530241"},{"r":"001111011221333244333245344445333555","s":"153024"},{"r":"444100411110433512453552455522445555","s":"415203"},{"r":"411102410002433302435333455353455553","s":"415302"},{"r":"222011332001322200334440535544555555","s":"352041"},{"r":"110000100200333220353334354434355444","s":"304251"},{"r":"133300113330552233522443525443555333","s":"402531"},{"r":"100000112200132202133222444225422255","s":"315204"},{"r":"330000311220314424344424333444553344","s":"524031"}],"7":[{"r":"0444441041111104221114444153444415346661554446111","s":"0426153"},{"r":"4400000440201144022214433221444225144462516666111","s":"3642051"},{"r":"0444444004211204422220043355444435644644564466666","s":"0463152"},{"r":"5552002115222215525523355552344555544555554445566","s":"5130246"},{"r":"2444400222411066244306444335643335566653356665555","s":"6425130"},{"r":"0000115022515502255550265335026443522664452266455","s":"0415362"},{"r":"2222002111222231224443324444534444455445555555566","s":"5130246"},{"r":"1111000131100033112203110000344000534665053665555","s":"6350241"},{"r":"2200000420110042010004003305446000564600056666666","s":"5314062"},{"r":"2211110211131422333143334334333444435346645544466","s":"6302415"},{"r":"1112220331132033333223344424634544463556646666644","s":"6351420"},{"r":"2022111202611122266616633661665364166556446666664","s":"1603524"},{"r":"2011111201151121155552115533115543311564431116663","s":"1306425"},{"r":"0011122111122221222222223322246632244662254666665","s":"0253164"},{"r":"1001111101111110111221111326444533644453364445666","s":"2064135"},{"r":"0000001332001132220003422050344005033005506600550","s":"4630251"},{"r":"4440000400022144332114335515444555566665556655555","s":"3642051"},{"r":"1111100111110211110025553322544433355553635566663","s":"5164203"},{"r":"1100000111333044113224111323441333341153364115566","s":"2064135"},{"r":"0111111021121102122110222311026634402566645556666","s":"0314625"},{"r":"1006222106623300622435662443566246655666665555666","s":"2036415"},{"r":"1110000122220313320031333333135334411533465555446","s":"4031526"},{"r":"0002222110002211122251352255335555435556645555566","s":"2041635"},{"r":"0222223002221322222132222233224443655443365554666","s":"0526314"},{"r":"0000001000201102220000332224663324465554446666444","s":"4631520"},{"r":"2220000242011344241334224443444454446445444665554","s":"3526041"},{"r":"1144000124430412243042244334254444425454442555566","s":"4025316"},{"r":"3333001333001133322123333222533334255554426655552","s":"4631520"},{"r":"0000333111032355122235514423511142355512265552266","s":"2036415"},{"r":"2222000244201124221134433333444443346464534666553","s":"4603152"},{"r":"2220001220001132220003344055634005566605556655555","s":"4630251"},{"r":"1100000112024013202401322240533244455522665222226","s":"3041526"}],"8":[{"r":"6002244462222431624424316664443366644444566664445556664755667777","s":"27164035"},{"r":"0001111103021611032216163311166631111465333116653336667533367777","s":"14205736"},{"r":"0033333340331123455222234455526344565566545655665556666756666777","s":"15370246"},{"r":"1111112014415520141135224414355544143355644435556663335577666666","s":"73641520"},{"r":"2221110022221110722211307721133077221144572221447776114677666666","s":"64257031"},{"r":"4441110243415102334151223444511144445771665555716657777766666777","s":"63702415"},{"r":"3331111033111111322211153355551563444515633645156666555565555775","s":"74203516"},{"r":"3333330035311320553133205534333053343446555444465566466675566666","s":"74625130"},{"r":"1100022241330002413330224115333344555533545333365555566655555577","s":"31640257"},{"r":"2222300023333311223344147734444475334444755444447444746477777664","s":"57024163"},{"r":"0333111100311111223551412333514133335141355554443333567433555677","s":"04136257"},{"r":"2300111423301444233334442543334425444344255244442222466744444467","s":"24036157"},{"r":"1222222011233320552322225553324255333244555562247726624472222222","s":"71536240"},{"r":"1633322016633320663332236444333366444473666555736766577367777777","s":"70642531"},{"r":"4444440244541402455411024554330055443300566444405766444457777777","s":"64752031"},{"r":"0044444420014444211144442213344477134444775544647557446677777776","s":"13046275"},{"r":"2222000344222113444222134222233344222322445522227445666277455662","s":"46370251"},{"r":"3122200031120022333222223533322255533344533333335366637755556667","s":"51426037"},{"r":"1000003310000333022003330000033544000355400403574404637744446777","s":"30251647"},{"r":"3322001132222021332322224333333344445553445553336675553367755333","s":"57461302"},{"r":"5551220055112220522222225322224253322442555527662522276722277777","s":"72415063"},{"r":"2220001122211111422221114442213344452122665522226557777277772222","s":"57461302"},{"r":"0000333300003113000221130700243377704455767000056677070077777700","s":"15364702"},{"r":"3333300133333301223333314243373744433737543377375466673755556777","s":"57142036"},{"r":"1111100211111102155111121351142213511424555144245566444455777744","s":"63715024"},{"r":"0001444300114343200443330000444365566444665566646666674466667774","s":"13075246"},{"r":"1111100111111101177221117722444375224333752666667526776677777766","s":"50374162"},{"r":"0013333611133236141322661433666644366556433667564336677666666677","s":"02531647"},{"r":"0222222201122222012222220334222233344252773355557733666577777766","s":"02614753"},{"r":"1111230011222366212253662222533624455566227575562775755622777666","s":"60251374"},{"r":"0000133300011333220111130003333355333343573336435777664355577777","s":"24136057"},{"r":"0000000000211550302211503062555500665445066666450006777706666677","s":"14205736"},{"r":"3111102231411024334414243444444444544644445466644457666645577766","s":"51604273"},{"r":"4442201144442011434422163344444635544666354444467747776677777777","s":"57403162"},{"r":"0000006602211666221166662336646623556444266567746666667466666677","s":"14026357"},{"r":"0011111102211111022111110233114106371144066715540067775466666777","s":"04137526"},{"r":"0011555500015445222555443333555455535444555555565777666655577777","s":"13026475"},{"r":"0000000325501133254041365540413655444666755466667774666677666666","s":"35064271"},{"r":"1144440011444200133452201344557744444577444475774467755766677777","s":"70613524"},{"r":"3331110022333103244333032243433374444333755444437756633377776333","s":"75063142"}],"9":[{"r":"000226666011222666035552226335556666335556644355858664353858644333888647338866666","s":"025174683"},{"r":"441111000444441020555441120555344444555344444565666664866677444866777764886666666","s":"857360241"},{"r":"333333000311303303213300003223303333443333333433353388433333368433773368444477778","s":"620514738"},{"r":"200011111220001881322111181321111881221155488222555448225566668225577688222588888","s":"152063748"},{"r":"000000000011000044071703224077703224007603334707600533777600033788608883778888833","s":"417586302"},{"r":"000000000444033110240003330247000333447770033677755633676665633677666663666668883","s":"370814625"},{"r":"300000000332000100532264440532664400555688448765688448766668488766768488777788888","s":"863172405"},{"r":"220222211220221113622222233624424443644444453664444455864648445866678845888888444","s":"263857140"},{"r":"003333333301132223333132525333332525333445525388846555333866688333867788333888888","s":"025137468"},{"r":"000004444022114343021144333000044377050045557555555777557777776555757886555557788","s":"031642857"},{"r":"000000222000110002400000022444000322444444322564444442566447722866447777888844477","s":"538640271"},{"r":"000001111024400011024311111444333111444351111444455171448866677444888887444448888","s":"271304685"},{"r":"000144455055142445335442255355444255555444455575455555575555568577755668557555888","s":"135064728"},{"r":"223333300223311003233333033333333337443333737333335777366385577368888777333338887","s":"740315286"},{"r":"144004443114444233144442253444444453444444453444445453884645453788665453778865553","s":"416857302"},{"r":"061111122661611222666661112644463332666444432666444455667444444667744484666448884","s":"028647135"},{"r":"111111110212244133222441113224441333224444434554666444666664444788864646777866666","s":"862751403"},{"r":"000133338020113888223333888423333388433333388444333588555555586555577886588888888","s":"241306857"},{"r":"000000111000010111000210131400211133460611113766611653777666656776666556666686666","s":"263807514"},{"r":"331333330331333220631133222633334482666666488666555488666774448688784848668888888","s":"827164035"},{"r":"066633333064683113024681173024685573444685777446685777446685777466688877488887777","s":"061825374"},{"r":"000000222601130002600130552666135554665555444666665554676666664678868884888888884","s":"028475316"},{"r":"440000011440203011640233331644444434644555444664445544664455545766777555777788888","s":"283715046"},{"r":"333330000353113022353313332553333332653553442655533343665333333887733333888773333","s":"648572031"},{"r":"000001111000221111222211141233221441263321441265322248665324448688222478688888888","s":"483162075"},{"r":"100000044114340444444344424444334422444434444455444444665544444766784444777788444","s":"617482035"},{"r":"000014444220114644222244644433446644434444654444666655884666666844677886888888886","s":"130258647"},{"r":"551114220551344420533334422533344442533334842555334844555688884856687788888888778","s":"827150364"},{"r":"333111000331131022311331002333331222333341114534444444533388644333778644333778888","s":"728140635"},{"r":"011111111001111111224441111244411131244618835246688535248687555448887558444488888","s":"041726358"},{"r":"110002444100222224333244444332224444333644444535644444555666474585544477588888888","s":"403172586"},{"r":"111100225114122225114222225414422325444223355442222555644425557644225887664228888","s":"413627085"},{"r":"002221112022221212222211222322222222322444222322455726327775766323377776333887666","s":"172035864"},{"r":"000000011000333001220003333523333433533734447533774677553744677333777777333333888","s":"281350647"},{"r":"222002222122022772122222772122232777442237777422336557444366657488868677444888888","s":"302417586"},{"r":"022666666026666111226661133266666663244665566646665888666655788666667788888888888","s":"071825364"},{"r":"111111100111111102131111002133111114553333414853384414853386444857786646888888666","s":"748261530"},{"r":"220000115200441155222244555223244455222245455622545555662555755688885777666685555","s":"350268174"},{"r":"222200266111202266121222666222233556224225566244222556222822666722826688728888888","s":"413526807"},{"r":"200222222202221111222111212322222222322442522332245522232445662232475688222777668","s":"162035748"},{"r":"000022222110022555313322225333442225444442555444422225422422685472226685777722288","s":"305248617"},{"r":"000000044023104004023104444223333444777773544777575555777555665777578865777777888","s":"031485726"},{"r":"111000000101002000100022004113324004112324444772228465772288665777778885777777788","s":"304258617"},{"r":"222231000233331130222333330233333330222346333524446333522266733777767737788777777","s":"862740531"},{"r":"222221000223221330223331133223233333222222244272552224276652244776558244788888244","s":"751684203"},{"r":"511150000515152220555552330554444333555564444556664666855666666877776666876666666","s":"735861420"},{"r":"555222220522211200544441222553341122533444422555542224777644424766688444888884444","s":"857261304"},{"r":"111100777122177747112244747332264747322664447226667557226667757226666777266666788","s":"403157268"}]};</script>
+<script>/* Meowdoko 動物圖庫：全部為原創的簡化造型（viewBox 100×100） */
+(function (root) {
+  const INK = '#4a3a35';
+  const S = `stroke="${INK}" stroke-width="3" stroke-linejoin="round"`;
+
+  // 眼睛：sad 時畫成閉眼弧線
+  function eyes(sad, y, dx, color) {
+    const c = color || INK, l = 50 - dx, r = 50 + dx;
+    if (sad) {
+      return `<path d="M${l - 6} ${y} q6 -6 12 0 M${r - 6} ${y} q6 -6 12 0" stroke="${c}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+    }
+    return `<ellipse cx="${l}" cy="${y}" rx="5" ry="7" fill="${INK}"/><ellipse cx="${r}" cy="${y}" rx="5" ry="7" fill="${INK}"/>` +
+      `<circle cx="${l + 1.5}" cy="${y - 2.5}" r="2" fill="#fff"/><circle cx="${r + 1.5}" cy="${y - 2.5}" r="2" fill="#fff"/>`;
+  }
+  const cheeks = (y) => `<ellipse cx="22" cy="${y}" rx="6" ry="4" fill="#ff9aa8" opacity=".55"/><ellipse cx="78" cy="${y}" rx="6" ry="4" fill="#ff9aa8" opacity=".55"/>`;
+  const mouth = (y) => `<path d="M50 ${y} v3 M50 ${y + 3} q-6 6 -12 1 M50 ${y + 3} q6 6 12 1" stroke="${INK}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+  const wrap = (inner) => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+
+  const ANIMALS = [
+    { name: '小貓', fur: '#f4a259', svg: (fur, sad) => wrap(`
+      <polygon points="14,46 18,10 44,28" fill="${fur}" ${S}/><polygon points="86,46 82,10 56,28" fill="${fur}" ${S}/>
+      <polygon points="21,36 23,20 36,29" fill="#ffb5c0"/><polygon points="79,36 77,20 64,29" fill="#ffb5c0"/>
+      <ellipse cx="50" cy="58" rx="40" ry="34" fill="${fur}" ${S}/>
+      <path d="M50 26 v10 M40 28 l3 8 M60 28 l-3 8" stroke="rgba(0,0,0,.18)" stroke-width="4" stroke-linecap="round"/>
+      ${eyes(sad, 54, 14)}${cheeks(66)}<polygon points="45,63 55,63 50,69" fill="#e76f7f"/>${mouth(69)}
+      <path d="M8 62 l14 2 M8 72 l14 -3 M92 62 l-14 2 M92 72 l-14 -3" stroke="${INK}" stroke-width="2" stroke-linecap="round" opacity=".6"/>`) },
+
+    { name: '小狗', fur: '#e0b17a', svg: (fur, sad) => wrap(`
+      <ellipse cx="16" cy="46" rx="12" ry="23" fill="#8a5a3c" ${S} transform="rotate(14 16 46)"/>
+      <ellipse cx="84" cy="46" rx="12" ry="23" fill="#8a5a3c" ${S} transform="rotate(-14 84 46)"/>
+      <ellipse cx="50" cy="55" rx="35" ry="34" fill="${fur}" ${S}/>
+      <ellipse cx="67" cy="48" rx="12" ry="13" fill="#8a5a3c" opacity=".85"/>
+      <ellipse cx="50" cy="69" rx="20" ry="15" fill="#fff4e0"/>
+      ${eyes(sad, 50, 15)}<ellipse cx="50" cy="62" rx="8" ry="6" fill="${INK}"/>${mouth(67)}
+      ${sad ? '' : '<path d="M44 74 q6 12 12 0z" fill="#ff8fa3"/>'}`) },
+
+    { name: '小牛', fur: '#ffffff', svg: (fur, sad) => wrap(`
+      <path d="M27 26 q-8 -14 -16 -9 q3 12 15 16z" fill="#f3e3c0" ${S}/><path d="M73 26 q8 -14 16 -9 q-3 12 -15 16z" fill="#f3e3c0" ${S}/>
+      <ellipse cx="10" cy="44" rx="11" ry="7" fill="#fff" ${S} transform="rotate(-20 10 44)"/><ellipse cx="90" cy="44" rx="11" ry="7" fill="#fff" ${S} transform="rotate(20 90 44)"/>
+      <ellipse cx="50" cy="52" rx="34" ry="32" fill="#fff" ${S}/>
+      <path d="M22 40 q8 -18 26 -12 q-4 18 -22 22z" fill="#3b3b3b"/><path d="M76 34 q8 4 6 16 q-10 0 -14 -10z" fill="#3b3b3b"/>
+      <ellipse cx="50" cy="73" rx="23" ry="15" fill="#ffc0cb" ${S}/>
+      <ellipse cx="41" cy="73" rx="3.5" ry="5.5" fill="#c2506a"/><ellipse cx="59" cy="73" rx="3.5" ry="5.5" fill="#c2506a"/>
+      ${eyes(sad, 50, 17)}`) },
+
+    { name: '小老虎', fur: '#f4a03a', svg: (fur, sad) => wrap(`
+      <circle cx="22" cy="24" r="13" fill="${fur}" ${S}/><circle cx="78" cy="24" r="13" fill="${fur}" ${S}/>
+      <circle cx="22" cy="25" r="6" fill="#fff4e0"/><circle cx="78" cy="25" r="6" fill="#fff4e0"/>
+      <ellipse cx="50" cy="56" rx="38" ry="33" fill="${fur}" ${S}/>
+      <path d="M50 25 v11 M40 27 l3 9 M60 27 l-3 9 M13 54 l11 3 M14 66 l11 -3 M87 54 l-11 3 M86 66 l-11 -3" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>
+      <ellipse cx="50" cy="71" rx="19" ry="13" fill="#fff6e8"/>
+      ${eyes(sad, 52, 15)}<polygon points="45,63 55,63 50,69" fill="#e76f7f"/>${mouth(69)}`) },
+
+    { name: '熊貓', fur: '#ffffff', svg: (fur, sad) => wrap(`
+      <circle cx="22" cy="24" r="13" fill="#2f2f33" ${S}/><circle cx="78" cy="24" r="13" fill="#2f2f33" ${S}/>
+      <ellipse cx="50" cy="56" rx="38" ry="33" fill="#fff" ${S}/>
+      <ellipse cx="33" cy="53" rx="10" ry="13" fill="#2f2f33" transform="rotate(22 33 53)"/><ellipse cx="67" cy="53" rx="10" ry="13" fill="#2f2f33" transform="rotate(-22 67 53)"/>
+      ${sad
+        ? '<path d="M27 54 q6 -6 12 0 M61 54 q6 -6 12 0" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>'
+        : '<circle cx="35" cy="53" r="5" fill="#fff"/><circle cx="65" cy="53" r="5" fill="#fff"/><circle cx="35.5" cy="54" r="3" fill="#2f2f33"/><circle cx="65.5" cy="54" r="3" fill="#2f2f33"/>'}
+      <ellipse cx="50" cy="66" rx="6" ry="4.5" fill="#2f2f33"/>${mouth(70)}`) },
+
+    { name: '小老鼠', fur: '#c9cdd6', svg: (fur, sad) => wrap(`
+      <circle cx="21" cy="27" r="16" fill="#b8bcc6" ${S}/><circle cx="79" cy="27" r="16" fill="#b8bcc6" ${S}/>
+      <circle cx="21" cy="27" r="9" fill="#ffb5c0"/><circle cx="79" cy="27" r="9" fill="#ffb5c0"/>
+      <ellipse cx="50" cy="58" rx="36" ry="32" fill="${fur}" ${S}/>
+      <ellipse cx="50" cy="70" rx="15" ry="11" fill="#f4f4f8"/>
+      ${eyes(sad, 52, 16)}<ellipse cx="50" cy="63" rx="5" ry="3.5" fill="#ff8fa3"/>
+      <path d="M50 66 v4" stroke="${INK}" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="45" y="72" width="10" height="8" rx="2" fill="#fff" stroke="${INK}" stroke-width="2"/>
+      <path d="M8 62 l14 2 M8 72 l14 -3 M92 62 l-14 2 M92 72 l-14 -3" stroke="${INK}" stroke-width="2" stroke-linecap="round" opacity=".6"/>`) },
+
+    { name: '小兔子', fur: '#ffffff', svg: (fur, sad) => wrap(`
+      <ellipse cx="34" cy="22" rx="9" ry="21" fill="#fff" ${S}/><ellipse cx="66" cy="22" rx="9" ry="21" fill="#fff" ${S}/>
+      <ellipse cx="34" cy="24" rx="4" ry="14" fill="#ffc0cb"/><ellipse cx="66" cy="24" rx="4" ry="14" fill="#ffc0cb"/>
+      <ellipse cx="50" cy="65" rx="35" ry="28" fill="#fff" ${S}/>
+      ${eyes(sad, 62, 15)}${cheeks(73)}<polygon points="46,69 54,69 50,74" fill="#ff8fa3"/>
+      <path d="M50 74 v3 M50 77 q-6 5 -11 1 M50 77 q6 5 11 1" stroke="${INK}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <rect x="46" y="80" width="8" height="8" rx="2" fill="#fff" stroke="${INK}" stroke-width="2"/>`) },
+
+    { name: '小豬', fur: '#ffb3c6', svg: (fur, sad) => wrap(`
+      <polygon points="16,36 22,10 44,24" fill="#ff9db6" ${S}/><polygon points="84,36 78,10 56,24" fill="#ff9db6" ${S}/>
+      <ellipse cx="50" cy="56" rx="38" ry="33" fill="${fur}" ${S}/>
+      <ellipse cx="50" cy="68" rx="17" ry="12" fill="#ff8fa8" ${S}/>
+      <ellipse cx="44" cy="68" rx="2.8" ry="4.8" fill="#b84a6a"/><ellipse cx="56" cy="68" rx="2.8" ry="4.8" fill="#b84a6a"/>
+      ${eyes(sad, 47, 17)}${cheeks(60)}`) },
+
+    { name: '小熊', fur: '#9c6b45', svg: (fur, sad) => wrap(`
+      <circle cx="20" cy="26" r="13" fill="${fur}" ${S}/><circle cx="80" cy="26" r="13" fill="${fur}" ${S}/>
+      <circle cx="20" cy="27" r="6" fill="#d9a97c"/><circle cx="80" cy="27" r="6" fill="#d9a97c"/>
+      <ellipse cx="50" cy="56" rx="38" ry="33" fill="${fur}" ${S}/>
+      <ellipse cx="50" cy="68" rx="18" ry="14" fill="#e8c9a0"/>
+      ${eyes(sad, 50, 16)}<ellipse cx="50" cy="62" rx="7" ry="5" fill="${INK}"/>${mouth(66)}`) },
+
+    { name: '小狐狸', fur: '#f08a24', svg: (fur, sad) => wrap(`
+      <polygon points="12,50 14,6 44,26" fill="${fur}" ${S}/><polygon points="88,50 86,6 56,26" fill="${fur}" ${S}/>
+      <polygon points="21,38 21,18 34,28" fill="${INK}"/><polygon points="79,38 79,18 66,28" fill="${INK}"/>
+      <path d="M10 48 Q50 14 90 48 Q84 70 66 84 Q50 92 34 84 Q16 70 10 48Z" fill="${fur}" ${S}/>
+      <path d="M14 56 Q32 58 50 80 Q68 58 86 56 Q80 76 64 86 Q50 92 36 86 Q20 76 14 56Z" fill="#fff"/>
+      ${eyes(sad, 52, 16)}<ellipse cx="50" cy="80" rx="5" ry="4" fill="${INK}"/>`) },
+
+    { name: '貓頭鷹', fur: '#a67c52', svg: (fur, sad) => wrap(`
+      <polygon points="18,34 22,6 42,24" fill="#8b6b4a" ${S}/><polygon points="82,34 78,6 58,24" fill="#8b6b4a" ${S}/>
+      <ellipse cx="50" cy="58" rx="38" ry="35" fill="${fur}" ${S}/>
+      <path d="M26 80 q4 7 8 0 M38 84 q4 7 8 0 M54 84 q4 7 8 0 M66 80 q4 7 8 0" stroke="#7a5a3a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle cx="34" cy="50" r="15" fill="#f6ead2" ${S}/><circle cx="66" cy="50" r="15" fill="#f6ead2" ${S}/>
+      ${sad
+        ? '<path d="M27 51 q7 -7 14 0 M59 51 q7 -7 14 0" stroke="#4a3a35" stroke-width="3.5" fill="none" stroke-linecap="round"/>'
+        : '<circle cx="34" cy="50" r="8" fill="#e9b04a"/><circle cx="66" cy="50" r="8" fill="#e9b04a"/><circle cx="34" cy="50" r="4.2" fill="#4a3a35"/><circle cx="66" cy="50" r="4.2" fill="#4a3a35"/><circle cx="35.6" cy="48" r="1.6" fill="#fff"/><circle cx="67.6" cy="48" r="1.6" fill="#fff"/>'}
+      <polygon points="45,60 55,60 50,71" fill="#e8a33d" stroke="#4a3a35" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M40 30 q-4 8 0 14 M60 30 q4 8 0 14" stroke="rgba(0,0,0,.2)" stroke-width="3" fill="none" stroke-linecap="round"/>`) },
+  ];
+
+  root.ANIMALS = ANIMALS;
+  root.animalSVG = (i, fur, sad) => ANIMALS[i].svg(fur || ANIMALS[i].fur, !!sad);
+})(window);
+</script>
+<script>/* Meowdoko 關卡產生器：N×N 棋盤、N 個色塊，唯一解 */
+(function (root) {
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function shuffle(arr, rnd) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // 隨機產生合法的貓位置：sol[row] = col，每欄一隻，上下列貓不相鄰
+  function randomPlacement(n, rnd) {
+    const sol = new Array(n).fill(-1);
+    const used = new Array(n).fill(false);
+    function go(r) {
+      if (r === n) return true;
+      const cols = shuffle([...Array(n).keys()], rnd);
+      for (const c of cols) {
+        if (used[c]) continue;
+        if (r > 0 && Math.abs(sol[r - 1] - c) <= 1) continue;
+        used[c] = true; sol[r] = c;
+        if (go(r + 1)) return true;
+        used[c] = false; sol[r] = -1;
+      }
+      return false;
+    }
+    return go(0) ? sol : null;
+  }
+
+  // 以貓為種子隨機擴張色塊
+  function growRegions(n, sol, rnd) {
+    const reg = Array.from({ length: n }, () => new Array(n).fill(-1));
+    let frontier = [];
+    sol.forEach((c, r) => { reg[r][c] = r; frontier.push([r, c]); });
+    let left = n * n - n;
+    while (left > 0) {
+      const i = Math.floor(rnd() * frontier.length);
+      const [r, c] = frontier[i];
+      const dirs = shuffle([[1, 0], [-1, 0], [0, 1], [0, -1]], rnd);
+      let grown = false;
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr, nc = c + dc;
+        if (nr < 0 || nc < 0 || nr >= n || nc >= n || reg[nr][nc] !== -1) continue;
+        reg[nr][nc] = reg[r][c];
+        frontier.push([nr, nc]);
+        left--; grown = true; break;
+      }
+      if (!grown) frontier.splice(i, 1);
+    }
+    return reg;
+  }
+
+  // 計算解的數量（最多數到 limit）
+  function countSolutions(n, reg, limit) {
+    const col = new Array(n).fill(false);
+    const rg = new Array(n).fill(false);
+    const pos = new Array(n).fill(-1);
+    let count = 0;
+    function go(r) {
+      if (count >= limit) return;
+      if (r === n) { count++; return; }
+      for (let c = 0; c < n; c++) {
+        if (col[c] || rg[reg[r][c]]) continue;
+        if (r > 0 && Math.abs(pos[r - 1] - c) <= 1) continue;
+        col[c] = rg[reg[r][c]] = true; pos[r] = c;
+        go(r + 1);
+        col[c] = rg[reg[r][c]] = false; pos[r] = -1;
+      }
+    }
+    go(0);
+    return count;
+  }
+
+
+  /* ---------- 推理解題器：衡量題目需要哪些技巧（不靠猜） ----------
+     技巧等級：1 唯一候選　2 單一色塊鎖定一列／欄（k=1）　3 試放排除（T）
+              4 兩個色塊鎖定兩列／欄（k=2）　5 三組（k=3）　6 四組以上（k>=4） */
+  function analyze(n, reg) {
+    const cand = Array.from({ length: n }, () => new Array(n).fill(true));
+    const rowDone = new Array(n).fill(false), colDone = new Array(n).fill(false), regDone = new Array(n).fill(false);
+    const uses = [0, 0, 0, 0, 0, 0, 0];
+    let placed = 0;
+
+    function lineCells(type, i) {
+      const out = [];
+      for (let a = 0; a < n; a++) {
+        if (type === 0) out.push([i, a]); else if (type === 1) out.push([a, i]);
+        else for (let b = 0; b < n; b++) if (reg[a][b] === i) out.push([a, b]);
+      }
+      return type === 2 ? out : out;
+    }
+    const done = (type, i) => (type === 0 ? rowDone : type === 1 ? colDone : regDone)[i];
+
+    function place(r, c) {
+      rowDone[r] = colDone[c] = regDone[reg[r][c]] = true;
+      for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) {
+        if (a === r && b === c) continue;
+        if (a === r || b === c || reg[a][b] === reg[r][c] || (Math.abs(a - r) <= 1 && Math.abs(b - c) <= 1)) cand[a][b] = false;
+      }
+      placed++;
+    }
+
+    function techSingle() {
+      for (let t = 0; t < 3; t++) for (let i = 0; i < n; i++) {
+        if (done(t, i)) continue;
+        const cs = lineCells(t, i).filter(([a, b]) => cand[a][b]);
+        if (cs.length === 1) { place(cs[0][0], cs[0][1]); return true; }
+      }
+      return false;
+    }
+
+    // k 個色塊的候選全落在 k 條列(或欄)，或 k 列(欄)的候選全落在 k 個色塊
+    function techSubset(k) {
+      let changed = false;
+      for (let mask = 1; mask < (1 << n); mask++) {
+        let bits = 0; for (let m = mask; m; m &= m - 1) bits++;
+        if (bits !== k) continue;
+        for (let dir = 0; dir < 2; dir++) {           // dir 0: 列, 1: 欄
+          // (a) 色塊子集 → 列/欄
+          let lines = new Set(), ok = true;
+          for (let g = 0; g < n && ok; g++) if (mask & (1 << g)) {
+            if (regDone[g]) { ok = false; break; }
+            for (const [a, b] of lineCells(2, g)) if (cand[a][b]) lines.add(dir === 0 ? a : b);
+          }
+          if (ok && lines.size === k) {
+            for (const l of lines) for (const [a, b] of lineCells(dir, l))
+              if (cand[a][b] && !(mask & (1 << reg[a][b]))) { cand[a][b] = false; changed = true; }
+          }
+          // (b) 列/欄子集 → 色塊
+          const regs = new Set(); ok = true;
+          for (let l = 0; l < n && ok; l++) if (mask & (1 << l)) {
+            if (done(dir, l)) { ok = false; break; }
+            for (const [a, b] of lineCells(dir, l)) if (cand[a][b]) regs.add(reg[a][b]);
+          }
+          if (ok && regs.size === k) {
+            for (const g of regs) for (const [a, b] of lineCells(2, g)) {
+              const l = dir === 0 ? a : b;
+              if (cand[a][b] && !(mask & (1 << l))) { cand[a][b] = false; changed = true; }
+            }
+          }
+        }
+        if (changed) return true;
+      }
+      return false;
+    }
+
+    // 試放排除：若在某格放貓會讓某列／欄／色塊沒有候選，則該格不能放
+    function techTrial() {
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+        if (!cand[r][c]) continue;
+        const g = reg[r][c];
+        for (let t = 0; t < 3; t++) for (let i = 0; i < n; i++) {
+          if (done(t, i) || (t === 0 && i === r) || (t === 1 && i === c) || (t === 2 && i === g)) continue;
+          let any = false;
+          for (const [a, b] of lineCells(t, i)) {
+            if (!cand[a][b]) continue;
+            if (a === r || b === c || reg[a][b] === g || (Math.abs(a - r) <= 1 && Math.abs(b - c) <= 1)) continue;
+            any = true; break;
+          }
+          if (!any) { cand[r][c] = false; return true; }
+        }
+      }
+      return false;
+    }
+
+    let guard = 0;
+    while (placed < n && guard++ < 500) {
+      if (techSingle()) { uses[1]++; continue; }
+      if (techSubset(1)) { uses[2]++; continue; }
+      if (techTrial()) { uses[3]++; continue; }
+      if (techSubset(2)) { uses[4]++; continue; }
+      if (techSubset(3)) { uses[5]++; continue; }
+      let hit = false;
+      for (let k = 4; k < n && !hit; k++) hit = techSubset(k);
+      if (hit) { uses[6]++; continue; }
+      return { solved: false, uses, maxTech: 99 };
+    }
+    let maxTech = 0; uses.forEach((u, i) => { if (u) maxTech = i; });
+    return { solved: placed === n, uses, maxTech };
+  }
+
+  function generate(n, seed) {
+    const rnd = mulberry32(seed >>> 0);
+    for (let attempt = 0; attempt < 20000; attempt++) {
+      const sol = randomPlacement(n, rnd);
+      if (!sol) continue;
+      const reg = growRegions(n, sol, rnd);
+      if (countSolutions(n, reg, 2) === 1) return { n, seed, regions: reg, solution: sol };
+    }
+    return null;
+  }
+
+  const api = { generate, countSolutions, mulberry32, analyze };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.Puzzle = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* Meowdoko 提示引擎：不告訴玩家動物在哪，只告訴他「哪一格該標 ✕」與原因。
+   所有推理只依據「棋盤上已放下的（正確的）動物」，所以原因都能在棋盤上驗證。 */
+(function (root) {
+  function next(n, reg, manual, solution, regName) {
+    const cand = Array.from({ length: n }, () => new Array(n).fill(true));
+    const rowDone = new Array(n).fill(false), colDone = new Array(n).fill(false), regDone = new Array(n).fill(false);
+    const cats = [];
+    const isX = (r, c) => manual[r * n + c] === 1;
+    const rowName = (r) => `第 ${r + 1} 列`, colName = (c) => `第 ${c + 1} 欄`;
+    const lineName = (dir, l) => (dir === 0 ? rowName(l) : colName(l));
+    const dirWord = (dir) => (dir === 0 ? '列' : '欄');
+    const conflicts = (r, c, a, b) => a === r || b === c || reg[a][b] === reg[r][c] || (Math.abs(a - r) <= 1 && Math.abs(b - c) <= 1);
+
+    function place(r, c) {
+      rowDone[r] = colDone[c] = regDone[reg[r][c]] = true;
+      for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) if ((a !== r || b !== c) && conflicts(r, c, a, b)) cand[a][b] = false;
+    }
+    for (let i = 0; i < n * n; i++) if (manual[i] === 2) { const r = Math.floor(i / n), c = i % n; place(r, c); cats.push([r, c]); }
+
+    function lineCells(type, i) {
+      const out = [];
+      for (let a = 0; a < n; a++) {
+        if (type === 0) out.push([i, a]); else if (type === 1) out.push([a, i]);
+        else for (let b = 0; b < n; b++) if (reg[a][b] === i) out.push([a, b]);
+      }
+      return out;
+    }
+    const done = (t, i) => (t === 0 ? rowDone : t === 1 ? colDone : regDone)[i];
+    const regs = (set) => [...set].sort((x, y) => x - y).map((g) => regName(g) + '色塊').join('、');
+    const lines = (dir, set) => [...set].sort((x, y) => x - y).map((l) => lineName(dir, l)).join('、');
+
+    // k 個色塊 ↔ k 條列／欄 的鎖定關係
+    function subsetStep(k) {
+      for (let mask = 1; mask < (1 << n); mask++) {
+        let bits = 0; for (let m = mask; m; m &= m - 1) bits++;
+        if (bits !== k) continue;
+        for (let dir = 0; dir < 2; dir++) {
+          // (a) 色塊子集 → 列／欄
+          const ls = new Set(); let ok = true; const gs = [];
+          for (let g = 0; g < n && ok; g++) if (mask & (1 << g)) {
+            if (regDone[g]) { ok = false; break; }
+            gs.push(g);
+            for (const [a, b] of lineCells(2, g)) if (cand[a][b]) ls.add(dir === 0 ? a : b);
+          }
+          if (ok && ls.size === k) {
+            const cells = [];
+            for (const l of ls) for (const [a, b] of lineCells(dir, l)) if (cand[a][b] && !(mask & (1 << reg[a][b]))) cells.push([a, b]);
+            if (cells.length) {
+              const reason = k === 1
+                ? `${regName(gs[0])}色塊裡還能放動物的位置，全部都在${lineName(dir, [...ls][0])}，所以這個色塊的動物一定在這${dirWord(dir)}，${lineName(dir, [...ls][0])}上屬於其他色塊的格子都不能放。`
+                : `${regs(gs)}這 ${k} 個色塊還能放動物的位置，全部擠在${lines(dir, ls)}這 ${k} ${dirWord(dir)}之內，這 ${k} ${dirWord(dir)}的名額剛好被它們用完，所以這幾${dirWord(dir)}中屬於其他色塊的格子都不能放。`;
+              return { cells, reason };
+            }
+          }
+          // (b) 列／欄子集 → 色塊
+          const rs = new Set(); ok = true; const ln = [];
+          for (let l = 0; l < n && ok; l++) if (mask & (1 << l)) {
+            if (done(dir, l)) { ok = false; break; }
+            ln.push(l);
+            for (const [a, b] of lineCells(dir, l)) if (cand[a][b]) rs.add(reg[a][b]);
+          }
+          if (ok && rs.size === k) {
+            const cells = [];
+            for (const g of rs) for (const [a, b] of lineCells(2, g)) { const l = dir === 0 ? a : b; if (cand[a][b] && !(mask & (1 << l))) cells.push([a, b]); }
+            if (cells.length) {
+              const reason = k === 1
+                ? `${lineName(dir, ln[0])}還能放動物的位置，全部都在${regName([...rs][0])}色塊裡，所以${regName([...rs][0])}色塊的動物一定在${lineName(dir, ln[0])}，這個色塊在其他${dirWord(dir)}的格子都不能放。`
+                : `${lines(dir, ln)}這 ${k} ${dirWord(dir)}還能放動物的位置，全部落在${regs(rs)}這 ${k} 個色塊裡，這些色塊的動物一定都在這幾${dirWord(dir)}，所以它們在其他${dirWord(dir)}的格子都不能放。`;
+              return { cells, reason };
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    // 試放排除：在某格放動物會讓某條列／欄／色塊沒有任何位置
+    function trialStep() {
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+        if (!cand[r][c]) continue;
+        const g = reg[r][c];
+        for (let t = 0; t < 3; t++) for (let i = 0; i < n; i++) {
+          if (done(t, i) || (t === 0 && i === r) || (t === 1 && i === c) || (t === 2 && i === g)) continue;
+          let any = false;
+          for (const [a, b] of lineCells(t, i)) { if (cand[a][b] && !conflicts(r, c, a, b)) { any = true; break; } }
+          if (!any) {
+            const what = t === 0 ? rowName(i) : t === 1 ? colName(i) : regName(i) + '色塊';
+            return { cells: [[r, c]], reason: `如果在這一格放動物，${what}就再也沒有任何位置可以放動物了，所以這一格不能放。` };
+          }
+        }
+      }
+      return null;
+    }
+
+    // 第一階段：只用目前棋盤上的動物做推理（由簡到難）
+    const finders = [() => subsetStep(1), trialStep, () => subsetStep(2), () => subsetStep(3),
+      () => { for (let k = 4; k < n; k++) { const s = subsetStep(k); if (s) return s; } return null; }];
+    for (let guard = 0; guard < 300; guard++) {
+      let step = null;
+      for (const f of finders) { step = f(); if (step) break; }
+      if (!step) break;
+      const pick = step.cells.find(([r, c]) => !isX(r, c));
+      if (pick) return { cell: pick[0] * n + pick[1], reason: step.reason, kind: 'logic' };
+      for (const [r, c] of step.cells) cand[r][c] = false;   // 這些玩家都標過了，繼續找下一步
+    }
+
+    // 第二階段：已放下的動物所封鎖、但玩家還沒標 ✕ 的格子（緊鄰 > 同色塊 > 同列 > 同欄）
+    const rel = ['adj', 'reg', 'row', 'col'];
+    for (const kind of rel) for (const [cr, cc] of cats) for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      if ((r === cr && c === cc) || isX(r, c) || manual[r * n + c] === 2) continue;
+      const adj = Math.abs(r - cr) <= 1 && Math.abs(c - cc) <= 1;
+      let why = null;
+      if (kind === 'adj' && adj) why = '這一格緊鄰已放下的動物（連斜角也算），動物之間不能相鄰，所以不能放。';
+      else if (kind === 'reg' && !adj && reg[r][c] === reg[cr][cc]) why = `${regName(reg[cr][cc])}色塊已經放了一隻動物，這個色塊其他格子都不能再放。`;
+      else if (kind === 'row' && !adj && r === cr) why = `${rowName(cr)}已經放了一隻動物，這一列其他格子都不能再放。`;
+      else if (kind === 'col' && !adj && c === cc) why = `${colName(cc)}已經放了一隻動物，這一欄其他格子都不能再放。`;
+      if (why) return { cell: r * n + c, reason: why, kind: 'trivial' };
+    }
+
+    // 第三階段：某條列／欄／色塊只剩一個位置，與它衝突的格子不能放（不透露位置本身）
+    for (let t = 0; t < 3; t++) for (let i = 0; i < n; i++) {
+      if (done(t, i)) continue;
+      const cs = lineCells(t, i).filter(([a, b]) => cand[a][b]);
+      if (cs.length !== 1) continue;
+      const [sr, sc] = cs[0];
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+        if (!cand[r][c] || (r === sr && c === sc) || isX(r, c) || !conflicts(sr, sc, r, c)) continue;
+        const what = t === 0 ? rowName(i) : t === 1 ? colName(i) : regName(i) + '色塊';
+        return { cell: r * n + c, reason: `${what}只剩下一個還能放動物的位置（試著找找看），那裡一定有動物；而這一格會跟它衝突（同列、同欄、同色塊或緊鄰），所以不能放。`, kind: 'single' };
+      }
+    }
+
+    // 最後：還有沒標的非答案格，需多步推理
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      if (solution[r] === c || isX(r, c) || manual[r * n + c] === 2) continue;
+      return { cell: r * n + c, reason: '把這一格排除之後，剩下的格子才湊得出「每列、每欄、每個色塊各一隻、彼此不相鄰」的答案（需要多步推理），所以這一格不能放動物。', kind: 'deep' };
+    }
+    return null;   // 所有該標的 ✕ 都標好了
+  }
+
+  const api = { next };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Hint = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>(function () {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const PALETTE = ['#ffd6a5', '#c7f0b8', '#a5e8f5', '#c9bfff', '#ffc9f0', '#fff3a0', '#ffb3b3', '#a9c8ff', '#b8ead2'];
+  const REGION_NAMES = ['杏橘', '淺綠', '天藍', '紫', '粉紅', '黃', '淺紅', '藍', '薄荷綠'];
+  const regName = (reg) => REGION_NAMES[reg % REGION_NAMES.length];
+  const GOLDFISH = '<svg viewBox="0 0 42 30" xmlns="http://www.w3.org/2000/svg"><path d="M28 15 C33 9 38 5 40 3 C41 11 41 19 40 27 C38 25 33 21 28 15Z" fill="#ff7a1a" stroke="#b9460c" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 7 C13 -1 21 0 23 7" fill="#ff7a1a" stroke="#b9460c" stroke-width="1.5" stroke-linejoin="round"/><ellipse cx="15" cy="15" rx="14" ry="10" fill="#ffa42e" stroke="#b9460c" stroke-width="1.5"/><path d="M14 20 C17 26 23 26 24 21" fill="#ff7a1a" stroke="#b9460c" stroke-width="1.2"/><path d="M21 9 C23 13 23 17 21 21" stroke="#e0701a" stroke-width="1.3" fill="none" stroke-linecap="round"/><circle cx="8" cy="12" r="2.6" fill="#fff" stroke="#b9460c" stroke-width="1"/><circle cx="7.6" cy="12.2" r="1.3" fill="#2d1a10"/><path d="M2.5 16.5 q2 1.6 4 0.2" stroke="#b9460c" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>';
+  const FUR = ['#f4a259', '#8d8d8d', '#f6e7cb', '#6b4f3a', '#e9c46a', '#d9d9d9', '#f1a8a8', '#9db4c0', '#c4a484'];
+
+
+  /* ---------- 難易度與積分 ---------- */
+  // pool：取用題庫中由易到難排序後的哪一段（0～1）
+  const DIFFS = {
+    easy:    { name: '容易', n: 5, pts: 1,  pool: [0, 1] },
+    normal:  { name: '一般', n: 7, pts: 3,  pool: [0, 0.6] },
+    hard:    { name: '困難', n: 8, pts: 5,  pool: [0, 1] },
+    extreme: { name: '極難', n: 9, pts: 10, pool: [0.5, 1] },
+  };
+  // 晉級門檻：30、80（+50）、150（+70）、之後每 +100（250、350…）；積分「超過」門檻才晉級，「小於等於」就退級
+  const KEYS = ['easy', 'normal', 'hard', 'extreme'];
+  const MAX_TIER = 3;                                               // 最高級：極難（151 分以上）
+  const stepOf = (t) => (t === 1 ? 50 : t === 2 ? 70 : 150);     // 級距：30→80→150→300
+  function tierOf(p) { let t = 0, lim = 30; while (p > lim && t < MAX_TIER) { t++; lim += stepOf(t); } return t; }
+  function limitOf(t) { if (t >= MAX_TIER) return Infinity; let lim = 30; for (let i = 1; i <= t; i++) lim += stepOf(i); return lim; }   // 升到下一級需「超過」的積分
+  const keyOfTier = (t) => KEYS[Math.min(t, 3)];
+  const fishOfTier = (t) => 3 + t;                                  // 每晉級一次金魚 +1
+  const HINT_FREE = 3, HINT_COST = 2, WHERE_FREE = 1, WHERE_COST = 5;
+
+  /* ---------- 存檔 ---------- */
+  const SAVE_KEY = 'meowdoko.v2';
+  let save = { points: 0, log: [], stats: {}, round: 0, voice: true };
+  try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) {}
+  function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+  function addPoints(delta, kind, diffKey) {
+    save.points += delta;
+    save.log.unshift({ t: Date.now(), k: kind, d: diffKey, v: delta });
+    if (save.log.length > 60) save.log.length = 60;
+    if (kind === 'win') {
+      const s = save.stats[diffKey] || (save.stats[diffKey] = { wins: 0, pts: 0 });
+      s.wins++; s.pts += delta;
+    }
+    persist(); refreshPoints();
+  }
+  const totalWins = () => Object.values(save.stats).reduce((a, s) => a + s.wins, 0);
+
+  /* ---------- 音效 ---------- */
+  let ac = null;
+  function beep(freq, dur, type, vol) {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.value = vol || 0.08;
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+      o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + dur);
+    } catch (e) {}
+  }
+  const sfx = {
+    mark: () => beep(420, 0.06, 'triangle'),
+    cat: () => { beep(660, 0.1, 'sine', 0.1); setTimeout(() => beep(880, 0.12, 'sine', 0.1), 70); },
+    wrong: () => beep(160, 0.28, 'sawtooth', 0.07),
+    win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.22, 'sine', 0.1), i * 120)),
+    lose: () => [330, 262, 196].forEach((f, i) => setTimeout(() => beep(f, 0.3, 'triangle', 0.09), i * 160)),
+  };
+
+  /* ---------- 讚美詞（文字泡泡＋語音） ---------- */
+  const PRAISES = ['讚！', '太棒了！', '了不起！', '好帥！', '我愛你！', '好厲害！', '真聰明！', '太強了！', '漂亮！', '完美！',
+    '好棒！', '一流！', '神準！', '滿分！', '帥呆了！', '超強！', '你最棒！', '天才！', '太神了！', '真有你的！'];
+  function shuffled(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function speak(text) {
+    try {
+      if (!save.voice || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text.replace(/！/g, ''));
+      u.lang = 'zh-TW'; u.rate = 1.05; u.pitch = 1.25; u.volume = 1;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function praise(cellIndex) {
+    // 每一關使用洗好的牌堆依序取用：同一關內不會出現相同的讚美詞
+    if (G.deckIdx >= G.deck.length) { G.deck = shuffled(PRAISES); G.deckIdx = 0; }
+    const text = G.deck[G.deckIdx++];
+    const cell = $('#board').children[cellIndex];
+    if (cell) {
+      const cr = cell.getBoundingClientRect(), ar = $('#app').getBoundingClientRect();
+      const b = document.createElement('div');
+      b.className = 'praise'; b.textContent = text;
+      b.style.left = (cr.left - ar.left + cr.width / 2) + 'px';
+      b.style.top = (cr.top - ar.top) + 'px';
+      $('#app').appendChild(b);
+      setTimeout(() => b.remove(), 1200);
+    }
+    speak(text);
+  }
+
+  const XMARK = '<svg class="xmark" viewBox="0 0 20 20"><path d="M3 3L17 17M17 3L3 17" stroke="rgba(70,50,45,.6)" stroke-width="3" stroke-linecap="round"/></svg>';
+
+
+  /* ---------- 狀態 ---------- */
+  let G = null;            // 目前這一盤（尚未開始時為 null）
+  let sel = 'easy';        // 目前難易度（由積分決定）
+  let tier = 0;            // 目前級別（0 起算）
+  let boardN = 0;          // 目前畫面上棋盤的邊長
+  let timerId = null;
+  const lastPick = {};     // 避免連續抽到同一題
+
+  const screens = { menu: $('#menu'), game: $('#game') };
+  function show(name) {
+    Object.entries(screens).forEach(([k, el]) => el.classList.toggle('active', k === name));
+    if (name === 'menu') { refreshMenu(); stopTimer(); return; }
+    if (G && G.over) G = null;                   // 已結束的舊局不再保留，回來時顯示新等級的空棋盤
+    if (!G) renderIdle();
+    else startTimer();
+    refreshAll();
+    resize();
+  }
+
+  const rotations = [
+    (r, c, n) => [r, c], (r, c, n) => [c, n - 1 - r], (r, c, n) => [n - 1 - r, n - 1 - c], (r, c, n) => [n - 1 - c, r],
+    (r, c, n) => [r, n - 1 - c], (r, c, n) => [n - 1 - r, c], (r, c, n) => [c, r], (r, c, n) => [n - 1 - c, n - 1 - r],
+  ];
+  // 依難易度從題庫抽題，再以旋轉／翻轉＋色塊重新編號產生外觀不同的版本
+  function pickPuzzle(key) {
+    const D = DIFFS[key], n = D.n, bank = MEOW_BANK[n];
+    const lo = Math.floor(bank.length * D.pool[0]), hi = Math.max(lo + 1, Math.ceil(bank.length * D.pool[1]));
+    let idx; let guard = 0;
+    do { idx = lo + Math.floor(Math.random() * (hi - lo)); } while (idx === lastPick[key] && hi - lo > 1 && guard++ < 20);
+    lastPick[key] = idx;
+    const entry = bank[idx], rnd = Puzzle.mulberry32((Math.random() * 4294967296) >>> 0);
+    const tf = rotations[Math.floor(rnd() * 8)];
+    const perm = [...Array(n).keys()];
+    for (let i = n - 1; i > 0; i--) { const k = Math.floor(rnd() * (i + 1)); [perm[i], perm[k]] = [perm[k], perm[i]]; }
+    const regions = Array.from({ length: n }, () => new Array(n).fill(0));
+    const solution = new Array(n).fill(0);
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      const [r2, c2] = tf(r, c, n);
+      regions[r2][c2] = perm[+entry.r[r * n + c]];
+      if (+entry.s[r] === c) solution[r2] = c2;
+    }
+    return { regions, solution, n };
+  }
+  function fmt(ms) {
+    const s = Math.floor(ms / 1000);
+    return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  function refreshMenu() {
+    $('#statPoints').textContent = save.points;
+    $('#statCleared').textContent = totalWins();
+  }
+  function refreshPoints() {
+    $('#scoreNum').textContent = save.points;
+    refreshMenu();
+    syncLevel();
+    refreshButtons();
+  }
+
+  /* ---------- 難易度選擇 ---------- */
+  function paintDiff() {
+    document.querySelectorAll('.diff').forEach((b) => b.classList.toggle('sel', b.dataset.diff === sel));
+  }
+  function chooseDiff() {
+    setReason(`難易度由積分決定：目前「${DIFFS[sel].name}」，${tier >= MAX_TIER ? '已是最高等級。' : `積分超過 ${limitOf(tier)} 分才會晉級。`}`);
+  }
+  // 依積分重新計算級別；進行中的這一盤不受影響
+  function syncLevel() {
+    const t = tierOf(save.points), k = keyOfTier(t);
+    const changed = t !== tier;
+    tier = t; sel = k; paintDiff();
+    if (!G) { renderIdle(); refreshAll(); }
+    else if (changed && !G.over) setReason(`積分已變動，下一盤將是「${DIFFS[k].name}」、${fishOfTier(t)} 條金魚。`, false);
+    return changed;
+  }
+  function levelText() {
+    const need = limitOf(tier) - save.points + 1, top = tier >= MAX_TIER;
+    const down = tier > 0 ? `<br>≤ ${limitOf(tier - 1)} 分退回「${DIFFS[keyOfTier(tier - 1)].name}」` : '';
+    return `目前：<b>${DIFFS[sel].name}</b>・金魚 ${fishOfTier(tier)} 條<br>積分 ${save.points}<br>${top ? '已是最高等級' : `再 ${need} 分晉級`}${down}<br>按「開始遊戲」`;
+  }
+
+  // 尚未開始：顯示所選難易度大小的空棋盤
+  function renderIdle() {
+    const n = DIFFS[sel].n;
+    boardN = n;
+    const board = $('#board'); board.innerHTML = '';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      const el = document.createElement('div');
+      el.className = 'cell idle';
+      const sh = [];
+      if (r > 0) sh.push('inset 0 1px 0 0 rgba(91,67,57,.25)');
+      if (c > 0) sh.push('inset 1px 0 0 0 rgba(91,67,57,.25)');
+      el.style.boxShadow = sh.join(',');
+      board.appendChild(el);
+    }
+    $('#boardWrap').classList.add('idle');
+    $('#idleMsg').innerHTML = levelText();
+    renderRoster();
+    stopTimer(); $('#gTimer').textContent = '00:00';
+    setReason(null); renderLives();
+    resize();
+  }
+
+  /* ---------- 開始遊戲 ---------- */
+  function onStart() {
+    if (G && !G.over && G.manual.some((v) => v)) { $('#modalConfirm').classList.add('show'); return; }
+    beginGame();
+  }
+  function beginGame() {
+    closeModals();
+    const p = pickPuzzle(sel);
+    G = {
+      diff: sel, n: p.n, regions: p.regions, solution: p.solution,
+      manual: new Array(p.n * p.n).fill(0),
+      lives: fishOfTier(tier), maxLives: fishOfTier(tier), hintsFree: HINT_FREE, whereFree: WHERE_FREE,
+      history: [], elapsed: 0, over: false, hintCell: -1, whereCell: -1,
+      rosterKey: 'g' + Date.now() + Math.random(),
+      animal: save.round % ANIMALS.length,           // 每一盤換一種動物
+      deck: shuffled(PRAISES), deckIdx: 0,
+    };
+    save.round++; persist();
+    $('#boardWrap').classList.remove('idle');
+    buildBoard(); setReason(null); renderLives(); render(); startTimer(); refreshAll();
+  }
+
+  function restart() {
+    if (!G) return;
+    G.manual.fill(0); G.lives = G.maxLives; G.history = []; G.elapsed = 0; G.over = false; G.hintCell = -1; G.whereCell = -1;
+    G.deck = shuffled(PRAISES); G.deckIdx = 0;      // 提示／放哪兒？的次數不會因重來而恢復
+    closeModals(); setReason(null); render(); renderLives(); startTimer(); refreshAll();
+  }
+
+  /* ---------- 計時 ---------- */
+  function startTimer() {
+    stopTimer();
+    let last = Date.now();
+    timerId = setInterval(() => {
+      const now = Date.now();
+      if (G && !G.over && document.hasFocus()) G.elapsed += now - last;
+      last = now;
+      $('#gTimer').textContent = fmt(G ? G.elapsed : 0);
+    }, 250);
+    $('#gTimer').textContent = fmt(G ? G.elapsed : 0);
+  }
+  function stopTimer() { if (timerId) clearInterval(timerId); timerId = null; }
+
+  /* ---------- 棋盤 ---------- */
+  function buildBoard() {
+    const n = G.n, board = $('#board');
+    boardN = n;
+    board.innerHTML = '';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      const el = document.createElement('div');
+      el.className = 'cell';
+      const reg = G.regions[r][c];
+      el.style.background = PALETTE[reg % PALETTE.length];
+      // 所有方格一律使用相同的細格線，不另外畫色塊交界粗線
+      const sh = [];
+      if (r > 0) sh.push('inset 0 1px 0 0 rgba(91,67,57,.35)');
+      if (c > 0) sh.push('inset 1px 0 0 0 rgba(91,67,57,.35)');
+      el.style.boxShadow = sh.join(',');
+      el.dataset.i = r * n + c;
+      el.addEventListener('click', () => onCell(r * n + c, false));
+      el.addEventListener('contextmenu', (e) => { e.preventDefault(); onCell(r * n + c, true); });
+      board.appendChild(el);
+    }
+    resize();
+  }
+
+  function resize() {
+    if (!boardN) return;
+    const wrap = $('#boardWrap');
+    const padTop = parseFloat(getComputedStyle(wrap).paddingTop) || 0;   // 棋盤上方留白不能算進可用高度
+    const size = Math.max(120, Math.min(wrap.clientWidth - 6, wrap.clientHeight - padTop - 8, 640));
+    const cs = Math.floor(size / boardN);
+    const b = $('#board');
+    b.style.width = b.style.height = cs * boardN + 6 + 'px';
+    b.style.gridTemplateColumns = b.style.gridTemplateRows = `repeat(${boardN}, ${cs}px)`;
+    b.style.setProperty('--cs', cs + 'px');
+  }
+  window.addEventListener('resize', resize);
+
+  function render() {
+    if (!G) return;
+    const cells = $('#board').children;
+    for (let i = 0; i < cells.length; i++) {
+      const el = cells[i], st = G.manual[i];
+      el.classList.toggle('cat', st === 2);
+      el.classList.toggle('hintcell', i === G.hintCell);
+      el.classList.toggle('wherecell', i === G.whereCell && st !== 2);
+      if (st === 2) {
+        const reg = G.regions[Math.floor(i / G.n)][i % G.n];
+        el.innerHTML = animalSVG(G.animal, FUR[reg % FUR.length]);
+      } else if (i === G.whereCell) {
+        el.innerHTML = animalSVG(G.animal, null).replace('<svg ', '<svg class="ghostanimal" ');
+      } else if (st === 1) {
+        el.innerHTML = XMARK;
+      } else if (i === G.hintCell) {
+        el.innerHTML = XMARK.replace('class="xmark"', 'class="xmark ghost"');
+      } else el.innerHTML = '';
+    }
+    renderRoster();
+    refreshButtons();
+  }
+
+  // 本盤要放的動物（依色塊顏色一隻一隻排好）；放好的色塊對應那隻就變暗
+  function renderRoster() {
+    const box = $('#roster');
+    if (!G) { box.innerHTML = ''; box.style.visibility = 'hidden'; return; }
+    box.style.visibility = 'visible';
+    if (box.dataset.key !== G.rosterKey) {
+      box.dataset.key = G.rosterKey;
+      box.innerHTML = '';
+      for (let reg = 0; reg < G.n; reg++) {
+        const s = document.createElement('span');
+        s.className = 'rp'; s.dataset.reg = reg;
+        s.style.background = PALETTE[reg % PALETTE.length];
+        s.title = regName(reg) + '色塊的動物';
+        s.innerHTML = animalSVG(G.animal, FUR[reg % FUR.length]);
+        box.appendChild(s);
+      }
+    }
+    const done = new Set();
+    G.manual.forEach((v, i) => { if (v === 2) done.add(G.regions[Math.floor(i / G.n)][i % G.n]); });
+    box.querySelectorAll('.rp').forEach((s) => s.classList.toggle('done', done.has(+s.dataset.reg)));
+  }
+
+  function renderLives() {
+    const box = $('#lives'); box.innerHTML = '';
+    const lives = G ? G.lives : fishOfTier(tier), total = G ? G.maxLives : fishOfTier(tier);
+    box.classList.toggle('many', total > 6);
+    for (let i = 0; i < total; i++) {
+      const s = document.createElement('span');
+      s.className = 'fish' + (i >= lives ? ' lost' : '');
+      s.innerHTML = GOLDFISH;
+      box.appendChild(s);
+    }
+  }
+
+  /* ---------- 按鈕狀態（積分不足 → 變暗） ---------- */
+  const hintCost = () => (G && G.hintsFree <= 0 ? HINT_COST : 0);
+  const whereCost = () => (G && G.whereFree <= 0 ? WHERE_COST : 0);
+  function refreshButtons() {
+    const playing = !!G && !G.over;
+    $('#btnUndo').disabled = !playing || !G.history.length;
+    $('#btnRestart').disabled = !G;
+    // 提示
+    const hc = hintCost(), hShort = playing && hc > save.points;
+    const bh = $('#btnHint');
+    bh.disabled = !playing || hShort;
+    bh.classList.toggle('insufficient', hShort);
+    $('#hintSub').textContent = !G ? `剩 ${HINT_FREE} 次` : hc === 0 ? `剩 ${G.hintsFree} 次` : `−${HINT_COST} 分`;
+    // 放哪兒？
+    const wc = whereCost(), wShort = playing && wc > save.points;
+    const bw = $('#btnWhere');
+    bw.disabled = !playing || wShort;
+    bw.classList.toggle('insufficient', wShort);
+    $('#whereSub').textContent = !G ? `僅 ${WHERE_FREE} 次` : wc === 0 ? `僅 ${G.whereFree} 次` : `−${WHERE_COST} 分`;
+  }
+  function refreshAll() {
+    $('#scoreNum').textContent = save.points;
+    if (G) {
+      $('#gTitle').textContent = `${DIFFS[G.diff].name}・${G.n} × ${G.n}`;
+      $('#gSub').textContent = `${ANIMALS[G.animal].name}・通關 ${DIFFS[G.diff].pts} 分 × 金魚`;
+      $('#tipText').textContent = `點一下標記 ✕，再點一下放${ANIMALS[G.animal].name}，第三下清除`;
+    } else {
+      $('#gTitle').textContent = '選擇難易度';
+      $('#gSub').textContent = `${DIFFS[sel].name}・${DIFFS[sel].n} × ${DIFFS[sel].n}`;
+      $('#tipText').textContent = '先選難易度，再按「開始遊戲」';
+    }
+    refreshButtons();
+  }
+
+  function pushHistory() { G.history.push(G.manual.slice()); if (G.history.length > 200) G.history.shift(); }
+
+  function onCell(i, rightClick) {
+    if (!G || G.over) return;
+    const n = G.n, r = Math.floor(i / n), c = i % n;
+    const cur = G.manual[i];
+    if (G.hintCell !== -1) { G.hintCell = -1; setReason(null); }
+    if (rightClick) {
+      if (cur === 2) return;
+      pushHistory(); G.manual[i] = cur === 1 ? 0 : 1; sfx.mark(); render(); return;
+    }
+    if (cur === 0) { pushHistory(); G.manual[i] = 1; sfx.mark(); }
+    else if (cur === 1) {
+      if (G.solution[r] === c) {
+        pushHistory(); G.manual[i] = 2; sfx.cat(); praise(i);
+        if (G.whereCell === i) { G.whereCell = -1; setReason(null); }
+        if (G.manual.filter((v) => v === 2).length === n) return render(), win();
+      } else {
+        wrong(i); return;
+      }
+    } else { pushHistory(); G.manual[i] = 0; sfx.mark(); }
+    render();
+  }
+
+  function wrong(i) {
+    G.lives--; sfx.wrong(); renderLives();
+    const el = $('#board').children[i];
+    el.classList.remove('wrong'); void el.offsetWidth; el.classList.add('wrong');
+    if (G.lives <= 0) { G.over = true; refreshButtons(); const mine = G; setTimeout(() => { if (G === mine) lose(); }, 450); }
+  }
+
+  function undo() {
+    if (!G || G.over || !G.history.length) return;
+    G.manual = G.history.pop(); G.hintCell = -1; setReason(null); sfx.mark(); render();
+  }
+
+  const REASON_DEFAULT = '「提示」告訴你哪一格該標 ✕ 與原因；「放哪兒？」指出動物可放哪裡。';
+  function setReason(text, on) {
+    const el = $('#hintReason');
+    el.textContent = text || REASON_DEFAULT;
+    el.classList.toggle('on', !!text && on !== false);
+  }
+
+  /* ---------- 提示：哪一格該標 ✕（前 3 次免費，之後每次 −2 分） ---------- */
+  function hint() {
+    if (!G || G.over) return;
+    if (G.hintCell !== -1) { setReason(G.hintText); return; }     // 已顯示、尚未處理：重複按不再扣次數／積分
+    const cost = hintCost();
+    if (cost > save.points) return;
+    const res = Hint.next(G.n, G.regions, G.manual, G.solution, regName);
+    if (!res) { setReason('目前所有該標 ✕ 的格子你都標好了！接下來試著找出動物的位置吧。'); return; }
+    if (cost > 0) addPoints(-cost, 'hint', G.diff); else G.hintsFree--;
+    G.hintCell = res.cell;
+    G.hintText = '💡 標 ✕：' + res.reason;
+    setReason(G.hintText);
+    sfx.mark(); render();
+  }
+
+  /* ---------- 放哪兒？：指出一隻動物可以放的位置（每盤 1 次免費，之後每次 −5 分） ---------- */
+  function where() {
+    if (!G || G.over) return;
+    if (G.whereCell !== -1 && G.manual[G.whereCell] !== 2) { setReason(G.whereText); return; }   // 已指出、尚未放上：不重複收費
+    const cost = whereCost();
+    if (cost > save.points) return;
+    const n = G.n;
+    const cats = [];
+    G.manual.forEach((v, i) => { if (v === 2) cats.push([Math.floor(i / n), i % n]); });
+    const blocked = (r, c) => cats.some(([a, b]) => a === r || b === c || G.regions[a][b] === G.regions[r][c] || (Math.abs(a - r) <= 1 && Math.abs(b - c) <= 1));
+    // 在尚未放好的列中，挑「剩餘可放位置最少」的那一列，最容易被玩家接著驗證
+    let best = null;
+    for (let r = 0; r < n; r++) {
+      if (G.manual[r * n + G.solution[r]] === 2) continue;
+      let free = 0; for (let c = 0; c < n; c++) if (!blocked(r, c)) free++;
+      if (!best || free < best.free) best = { r, free };
+    }
+    if (!best) return;
+    const r = best.r, c = G.solution[r];
+    if (cost > 0) addPoints(-cost, 'where', G.diff); else G.whereFree--;
+    G.whereCell = r * n + c;
+    G.whereText = `📍 動物放在亮框格：第 ${r + 1} 列、第 ${c + 1} 欄（${regName(G.regions[r][c])}色塊）。點兩下即可放上。`;
+    setReason(G.whereText);
+    sfx.mark(); render();
+  }
+
+  /* ---------- 結果 ---------- */
+  function closeModals() { document.querySelectorAll('.modal').forEach((m) => m.classList.remove('show')); }
+
+  function endButtons(list) {
+    const box = $('#endBtns'); box.innerHTML = '';
+    list.forEach(([text, fn, primary]) => {
+      const b = document.createElement('button');
+      b.className = 'big' + (primary ? ' primary' : '');
+      b.textContent = text; b.onclick = fn; box.appendChild(b);
+    });
+  }
+
+  function win() {
+    G.over = true; sfx.win(); confetti();
+    const D = DIFFS[G.diff];
+    const tierBefore = tier;
+    const gain = D.pts * G.lives;                    // 基本分 × 剩下的金魚數
+    addPoints(gain, 'win', G.diff);
+    refreshButtons();
+    const msg = `${D.name}（${G.n} × ${G.n}）通關！\n用時 ${fmt(G.elapsed)}　剩餘金魚 ${G.lives} 條\n獲得 ${D.pts} × ${G.lives} ＝ +${gain} 分，目前積分 ${save.points}` +
+      (tier > tierBefore ? `\n🎉 晉級「${DIFFS[sel].name}」！金魚增加為 ${fishOfTier(tier)} 條` : (tier >= MAX_TIER ? '\n已是最高等級' : `\n再 ${limitOf(tier) - save.points + 1} 分晉級`));
+    const mine = G;
+    setTimeout(() => {
+      if (G !== mine) return;                      // 期間已開新局就不要再跳出舊結果
+      $('#endCat').innerHTML = animalSVG(G.animal);
+      $('#endTitle').textContent = '🎉 過關了！';
+      $('#endMsg').style.whiteSpace = 'pre-line'; $('#endMsg').textContent = msg;
+      endButtons([['再玩一盤 ▶', beginGame, true], ['返回選單', () => { closeModals(); show('menu'); }]]);
+      $('#modalEnd').classList.add('show');
+    }, 700);
+  }
+
+  function lose() {
+    sfx.lose();
+    $('#endCat').innerHTML = animalSVG(G.animal, null, true);
+    $('#endTitle').textContent = '金魚都游走了…';
+    $('#endMsg').style.whiteSpace = 'normal'; $('#endMsg').textContent = `${ANIMALS[G.animal].name}難過地走掉了，再試一次吧！`;
+    endButtons([['再試一次（同一題）', restart, true], ['新的一盤', beginGame], ['返回選單', () => { closeModals(); show('menu'); }]]);
+    $('#modalEnd').classList.add('show');
+  }
+
+  /* ---------- 積分紀錄 ---------- */
+  function openScore() {
+    $('#msTotal').textContent = save.points;
+    const rows = Object.keys(DIFFS).map((k) => {
+      const s = save.stats[k] || { wins: 0, pts: 0 };
+      return `<tr><td>${DIFFS[k].name}（基本 ${DIFFS[k].pts}）</td><td>${s.wins}</td><td>${s.pts}</td></tr>`;
+    });
+    $('#msStats').innerHTML = rows.join('');
+    const label = { win: '通關', hint: '提示', where: '放哪兒？' };
+    const pad = (x) => String(x).padStart(2, '0');
+    $('#msLog').innerHTML = save.log.length ? save.log.slice(0, 30).map((e) => {
+      const d = new Date(e.t);
+      return `<li><span class="t">${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}</span>` +
+        `<span>${DIFFS[e.d] ? DIFFS[e.d].name : ''}・${label[e.k] || ''}</span><b class="${e.v > 0 ? 'plus' : 'minus'}">${e.v > 0 ? '+' : '−'}${Math.abs(e.v)}</b></li>`;
+    }).join('') : '<li class="empty">還沒有紀錄，通關一盤就會有積分！</li>';
+    $('#modalScore').classList.add('show');
+  }
+
+  /* ---------- 彩帶 ---------- */
+  function confetti() {
+    const cv = $('#confetti'), ctx = cv.getContext('2d');
+    cv.width = cv.clientWidth; cv.height = cv.clientHeight;
+    const cols = ['#ff8fa3', '#ffb703', '#8ecae6', '#95d5b2', '#cdb4db'];
+    const ps = Array.from({ length: 90 }, () => ({
+      x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * 0.4,
+      vx: (Math.random() - 0.5) * 3, vy: 2 + Math.random() * 4, s: 5 + Math.random() * 6,
+      c: cols[(Math.random() * cols.length) | 0], r: Math.random() * 6,
+    }));
+    let t = 0;
+    (function frame() {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ps.forEach((p) => { p.x += p.vx; p.y += p.vy; p.r += 0.15; ctx.fillStyle = p.c;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.6); ctx.restore(); });
+      if (++t < 150) requestAnimationFrame(frame); else ctx.clearRect(0, 0, cv.width, cv.height);
+    })();
+  }
+
+  /* ---------- 事件 ---------- */
+  $('#logoCat').innerHTML = animalSVG(0);
+  $('#btnPlay').onclick = () => show('game');
+  $('#btnHow').onclick = () => $('#modalHow').classList.add('show');
+  document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = closeModals));
+  document.querySelectorAll('.diff').forEach((b) => (b.onclick = chooseDiff));
+  $('#btnStart').onclick = onStart;
+  $('#confirmYes').onclick = beginGame;
+  $('#btnScore').onclick = openScore;
+  $('#btnBack').onclick = () => { closeModals(); show('menu'); };
+  const vb = $('#btnVoice');
+  const paintVoice = () => { vb.textContent = save.voice ? '🔊' : '🔇'; vb.title = save.voice ? '讚美語音：開' : '讚美語音：關'; };
+  vb.onclick = () => { save.voice = !save.voice; persist(); paintVoice(); if (save.voice) speak('讚'); else { try { window.speechSynthesis.cancel(); } catch (e) {} } };
+  paintVoice();
+  $('#btnUndo').onclick = undo;
+  $('#btnHint').onclick = hint;
+  $('#btnWhere').onclick = where;
+  $('#btnRestart').onclick = restart;
+  document.addEventListener('keydown', (e) => {
+    if (!$('#game').classList.contains('active')) return;
+    const k = e.key.toLowerCase();
+    if (k === 'z') undo(); else if (k === 'h') hint(); else if (k === 'r') restart();
+    else if (k === 'escape') { closeModals(); show('menu'); }
+  });
+
+  renderLives(); refreshPoints();
+  window.__meowdoko = { get G() { return G; }, get sel() { return sel; }, get tier() { return tier; }, get save() { return save; }, DIFFS, addPoints, syncLevel, tierOf, limitOf, fishOfTier, beginGame, refreshButtons };
+})();
+</script>
+</body>
+</html>
