@@ -191,6 +191,46 @@ h3{margin:14px 0 4px;font-size:15px}
 .lives.many .fish svg{width:27px;height:20px}
 .lives{min-height:26px}
 #boardWrap{padding-top:14px}
+
+/* ===== 手機／窄螢幕版面（桌機不受影響）：難易度在棋盤上方，積分與開始在棋盤下方 ===== */
+@media (max-width:700px), (pointer:coarse) and (max-width:900px){
+  #stage{flex-direction:column;gap:8px;align-items:stretch}
+  #sideR{order:1;width:auto;flex-direction:row;justify-content:space-between;gap:6px;flex:0 0 auto}
+  #boardWrap{order:2;padding-top:0;width:100%}
+  #sideL{order:3;width:auto;flex-direction:row;gap:8px;flex:0 0 auto}
+  #sideR .sbtn{flex:1;min-width:0;padding:7px 2px;font-size:17px;border-radius:12px}
+  #sideR .sbtn small{font-size:12px;line-height:1.25}
+  #sideL .sbtn{flex:1;height:54px;flex-direction:row;gap:7px;padding:4px 6px;font-size:18px}
+  #sideL .sbtn .ico{font-size:26px}
+  #sideL .sbtn b{font-size:22px}
+  #sideL .sbtn small{font-size:15px;font-weight:700;opacity:1}
+  .diff.sel{transform:none}
+  .rules{font-size:14.5px;line-height:1.5}
+  .topbar h1,#gTitle{font-size:21px}
+  #gSub{font-size:14px}
+  #gTimer{font-size:17px}
+  .roster{height:28px}.roster .rp{width:25px;height:25px}.roster .rp svg{width:20px;height:20px}
+  .lives .fish svg{width:38px;height:27px}
+  .reason{height:60px;font-size:14px;line-height:1.4;padding:4px 10px}
+  #idleMsg{font-size:16px}
+  .toolbar button{font-size:16px}
+  .toolbar button small{font-size:13px}
+  #tipText,.tip{font-size:14px}
+}
+
+@media (max-width:700px) and (min-height:721px), (pointer:coarse) and (max-width:900px) and (min-height:721px){
+  .reason{height:68px}
+}
+@media (max-width:700px) and (max-height:720px), (pointer:coarse) and (max-width:900px) and (max-height:720px){
+  .rules{font-size:13px;line-height:1.35}
+  .lives .fish svg{width:30px;height:22px}
+  .reason{height:54px;font-size:13px}
+  #sideL .sbtn{height:44px}
+  #sideR .sbtn{padding:4px 2px}
+  #sideR .sbtn small{font-size:10.5px;line-height:1.15}
+  .toolbar button{padding:6px 2px}
+  #tipText,.tip{font-size:12.5px}
+}
 </style>
 </head>
 <body>
