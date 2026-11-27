@@ -1009,14 +1009,55 @@ html[data-theme=dark] .name-msg.good{color:#58d68d}html[data-theme=dark] .name-m
   function beep(freq, dur, type, vol) {
     if (!save.sound) return;
     try {
-      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      ensureAudio();
+      const t0 = ac.currentTime;
       const o = ac.createOscillator(), g = ac.createGain();
       o.type = type || 'sine'; o.frequency.value = freq;
-      g.gain.value = vol || 0.08;
-      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
-      o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + dur);
+      g.gain.setValueAtTime(vol || 0.08, t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0 + dur + 0.02);
     } catch (e) {}
   }
+  // iPhone／iPad（iOS Safari）：聲音必須在「使用者點擊」當下啟用，而且要明確 resume；
+  // 另外用「播放」類型的音訊工作階段，讓靜音鍵（響鈴／靜音切換）不會擋住遊戲音效。
+  function makeSilentWav() {                              // 0.3 秒、8 位元、單聲道的無聲 WAV
+    const n = 3300, b = new Uint8Array(44 + n), dv = new DataView(b.buffer), s = (o, t) => { for (let i = 0; i < t.length; i++) b[o + i] = t.charCodeAt(i); };
+    s(0, 'RIFF'); dv.setUint32(4, 36 + n, true); s(8, 'WAVE'); s(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+    dv.setUint32(24, 11025, true); dv.setUint32(28, 11025, true); dv.setUint16(32, 1, true); dv.setUint16(34, 8, true); s(36, 'data'); dv.setUint32(40, n, true);
+    b.fill(128, 44);
+    let bin = ''; for (let i = 0; i < b.length; i++) bin += String.fromCharCode(b[i]);
+    return 'data:audio/wav;base64,' + btoa(bin);
+  }
+  let silentEl = null, unlocked = false;
+  function ensureAudio() {
+    if (!ac) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ac = new AC();
+    }
+    if (ac.state !== 'running' && ac.resume) { try { ac.resume(); } catch (e) {} }
+  }
+  function unlockAudio() {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    try {
+      ensureAudio();
+      if (ac) {                                           // 播一段無聲緩衝，完成 iOS 的解鎖
+        const b = ac.createBuffer(1, 1, 22050), s = ac.createBufferSource();
+        s.buffer = b; s.connect(ac.destination); s.start(0);
+      }
+      if (!silentEl) {                                    // 舊版 iOS：靠一個無聲的 <audio> 讓音訊走「播放」通道
+        silentEl = new Audio(makeSilentWav()); silentEl.loop = true; silentEl.volume = 0.01; silentEl.setAttribute('playsinline', '');
+      }
+      const p = silentEl.play(); if (p && p.catch) p.catch(() => {});
+      if (window.speechSynthesis) { window.speechSynthesis.getVoices(); }
+    } catch (e) {}
+    if (ac && ac.state === 'running') unlocked = true;
+  }
+  ['touchend', 'click', 'keydown'].forEach((ev) => document.addEventListener(ev, () => { if (!unlocked) unlockAudio(); else if (ac && ac.state !== 'running') ensureAudio(); }, { capture: true, passive: true }));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { if (ac && ac.state !== 'running') ensureAudio(); if (silentEl && unlocked) { const p = silentEl.play(); if (p && p.catch) p.catch(() => {}); } }
+    else if (silentEl) silentEl.pause();                  // 切到背景就停掉無聲音訊，避免耗電與出現鎖定畫面的播放控制
+  });
   const sfx = {
     mark: () => beep(420, 0.06, 'triangle'),
     cat: () => { beep(660, 0.1, 'sine', 0.1); setTimeout(() => beep(880, 0.12, 'sine', 0.1), 70); },
@@ -1036,10 +1077,14 @@ html[data-theme=dark] .name-msg.good{color:#58d68d}html[data-theme=dark] .name-m
   function speak(text) {
     try {
       if (!save.sound || !window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
+      const ss = window.speechSynthesis;
+      if (ss.speaking || ss.pending) ss.cancel();            // iOS 上對「沒在說話」的狀態呼叫 cancel 會讓下一次朗讀失效
       const u = new SpeechSynthesisUtterance(text.replace(/！/g, ''));
+      const vs = ss.getVoices ? ss.getVoices() : [];
+      const v = vs.find((x) => /zh[-_]TW/i.test(x.lang)) || vs.find((x) => /^zh/i.test(x.lang));
+      if (v) u.voice = v;
       u.lang = 'zh-TW'; u.rate = 1.05; u.pitch = 1.25; u.volume = 1;
-      window.speechSynthesis.speak(u);
+      ss.speak(u);
     } catch (e) {}
   }
   function praise(cellIndex) {
