@@ -45,7 +45,9 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .slot.p2{top:2%;left:50%;transform:translateX(-50%)}
 .slot.p1{left:14%;top:50%;transform:translateY(-50%)}
 .slot.p3{right:14%;top:50%;transform:translateY(-50%)}
-#south{grid-area:s;text-align:center}
+#south{grid-area:s;text-align:center;align-self:end}
+#passRow{height:clamp(24px,5.5cqh,46px);display:flex;align-items:center;justify-content:center}
+#passBtn{white-space:nowrap;font-size:clamp(10px,1.6cqw,17px);padding:.35em 1em}
 #hand{display:flex;justify-content:center;align-items:flex-end;padding:14px 4px 2px;height:calc(var(--ch) + 18px)}
 .card{width:var(--cw);height:var(--ch);background:#fff;border-radius:7px;color:#111;position:relative;box-shadow:0 2px 5px #0007;font-weight:700;user-select:none;flex:none}
 .card.red{color:#c8201f}
@@ -84,9 +86,9 @@ tr.tot td{font-weight:700;background:var(--tag)}
 <div id="stage"><div id="board">
   <div class="seat north" id="seat2"></div>
   <div class="seat west" id="seat1"></div>
-  <div id="center"><div id="wm"><svg viewBox="0 0 300 280" aria-hidden="true"><path d="M150 262C60 190 14 140 14 84 14 44 44 16 82 16c28 0 54 16 68 42 14-26 40-42 68-42 38 0 68 28 68 68 0 56-46 106-136 178z" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.22)" stroke-width="4"/><text x="150" y="150" text-anchor="middle" font-size="58" font-weight="900" fill="rgba(255,255,255,.30)" font-family="Noto Sans TC,PingFang TC,Microsoft JhengHei,sans-serif">傷心小棧</text><text x="150" y="190" text-anchor="middle" font-size="26" font-weight="700" letter-spacing="8" fill="rgba(255,255,255,.22)" font-family="Georgia,serif">HEARTS</text></svg></div><div id="trick"></div><button id="passBtn" style="display:none;position:absolute;left:50%;bottom:6%;transform:translateX(-50%);z-index:3;white-space:nowrap;font-size:clamp(10px,1.6cqw,16px);padding:.4em .9em">確認傳牌</button></div>
+  <div id="center"><div id="wm"><svg viewBox="0 0 300 280" aria-hidden="true"><path d="M150 262C60 190 14 140 14 84 14 44 44 16 82 16c28 0 54 16 68 42 14-26 40-42 68-42 38 0 68 28 68 68 0 56-46 106-136 178z" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.22)" stroke-width="4"/><text x="150" y="150" text-anchor="middle" font-size="58" font-weight="900" fill="rgba(255,255,255,.30)" font-family="Noto Sans TC,PingFang TC,Microsoft JhengHei,sans-serif">傷心小棧</text><text x="150" y="190" text-anchor="middle" font-size="26" font-weight="700" letter-spacing="8" fill="rgba(255,255,255,.22)" font-family="Georgia,serif">HEARTS</text></svg></div><div id="trick"></div></div>
   <div class="seat east" id="seat3"></div>
-  <div id="south"><div class="seat" id="seat0"></div><div id="hand"></div></div>
+  <div id="south"><div id="passRow"><button id="passBtn" style="visibility:hidden">確認傳牌</button></div><div class="seat" id="seat0"></div><div id="hand"></div></div>
 </div></div>
 <div id="msg"></div>
 <details open><summary>計分板（累計 100 分即結束，分數最低者獲勝）</summary><div id="score"></div></details>
@@ -277,7 +279,7 @@ function render(){
     if(G.hint===c.id)cls+=' hint';
     return cardHTML(c,cls,`data-id="${c.id}"`);
   }).join('');
-  $('passBtn').style.display=G.phase==='pass'?'block':'none';
+  $('passBtn').style.visibility=G.phase==='pass'?'visible':'hidden';
   $('passBtn').disabled=G.sel.size!==3;
   $('passBtn').textContent=`確認傳牌（已選 ${G.sel.size}／3）`;
   $('hintBtn').disabled=!(G.phase==='pass'||(G.phase==='play'&&G.turn===0&&G.trick.length<4));
