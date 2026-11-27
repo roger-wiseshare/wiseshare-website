@@ -8,6 +8,7 @@
 <style>:root{
   --bg:#fff6ea; --ink:#4a3a35; --soft:#8a756b; --card:#ffffff; --accent:#ff8fa3; --accent2:#ffb703;
   --line:#5b4339; --shadow:0 6px 18px rgba(120,80,50,.18);
+  --panel:rgba(255,255,255,.6); --panelStrong:rgba(255,255,255,.92); --idle:#f3e6d4; --rule:#eee; --rule2:#f3eee8; --ring:#fff; --stroke:#fff; --kbd:#eee; --kbdb:#ccc;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
@@ -70,14 +71,14 @@ button.big.ghost{background:transparent;box-shadow:none;color:var(--soft)}
 .card{background:var(--card);border-radius:22px;padding:22px;width:min(420px,100%);box-shadow:var(--shadow);max-height:92%;overflow:auto}
 .card.center{text-align:center}
 .card ol{padding-left:20px;line-height:1.7}
-kbd{background:#eee;border-radius:4px;padding:1px 6px;border:1px solid #ccc}
+kbd{background:var(--kbd);border-radius:4px;padding:1px 6px;border:1px solid var(--kbdb)}
 #endCat svg{width:110px;height:110px}
 .end-btns{display:flex;flex-direction:column;gap:10px;margin-top:14px}
 #confetti{position:absolute;inset:0;pointer-events:none;z-index:20;width:100%;height:100%}
 
 .icon.small{width:38px;height:38px;font-size:18px}
 .praise{position:absolute;transform:translate(-50%,0);z-index:15;pointer-events:none;white-space:nowrap;
-  font-weight:900;font-size:26px;color:#ff5d8f;-webkit-text-stroke:5px #fff;paint-order:stroke fill;
+  font-weight:900;font-size:26px;color:#ff5d8f;-webkit-text-stroke:5px var(--stroke);paint-order:stroke fill;
   text-shadow:0 3px 8px rgba(120,60,60,.3);animation:praiseUp 1.1s ease-out forwards}
 @keyframes praiseUp{0%{opacity:0;transform:translate(-50%,10px) scale(.6)}15%{opacity:1;transform:translate(-50%,-6px) scale(1.15)}
   70%{opacity:1;transform:translate(-50%,-34px) scale(1)}100%{opacity:0;transform:translate(-50%,-54px) scale(1)}}
@@ -87,7 +88,7 @@ kbd{background:#eee;border-radius:4px;padding:1px 6px;border:1px solid #ccc}
 .lives .fish{display:flex;align-items:center}
 .lives .fish svg{width:40px;height:29px}
 .lives{margin:6px 0}
-.reason{width:100%;height:76px;margin-top:8px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.6);
+.reason{width:100%;height:76px;margin-top:8px;padding:8px 12px;border-radius:12px;background:var(--panel);
   font-size:13.5px;line-height:1.5;color:var(--soft);overflow:auto;display:flex;align-items:center}
 .reason.on{background:#fff3c4;color:var(--ink);box-shadow:0 0 0 2px #ffb703 inset}
 .xmark.ghost path{stroke:#ff6b35;stroke-width:3.4}
@@ -108,7 +109,7 @@ kbd{background:#eee;border-radius:4px;padding:1px 6px;border:1px solid #ccc}
 .diff[data-diff=hard]{background:#f29b2f}
 .diff[data-diff=extreme]{background:#d9452c}
 .diff:not(.sel){opacity:.5;filter:saturate(.7)}
-.diff.sel{border-color:var(--ink);box-shadow:0 0 0 2px #fff,0 4px 12px rgba(0,0,0,.3);transform:scale(1.04)}
+.diff.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--ring),0 4px 12px rgba(0,0,0,.3);transform:scale(1.04)}
 .start{margin-top:6px;padding:13px 2px;font-size:15px;background:linear-gradient(160deg,#a259ff,#6a1fd1);letter-spacing:1px}
 .score{background:#fff3c4;color:#8a5a00;border-color:#ffb703;padding:12px 2px}
 .score .ico{font-size:24px}
@@ -116,10 +117,10 @@ kbd{background:#eee;border-radius:4px;padding:1px 6px;border:1px solid #ccc}
 .score small{color:#8a5a00}
 
 #idleMsg{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;text-align:center;
-  font-weight:800;font-size:16px;line-height:1.6;color:var(--ink);background:rgba(255,255,255,.92);
+  font-weight:800;font-size:16px;line-height:1.6;color:var(--ink);background:var(--panelStrong);
   padding:12px 16px;border-radius:14px;box-shadow:var(--shadow);pointer-events:none}
 #boardWrap.idle #idleMsg{display:block}
-.cell.idle{background:#f3e6d4;cursor:default}
+.cell.idle{background:var(--idle);cursor:default}
 
 /* ---- 工具列（四顆）---- */
 .toolbar button small{font-size:11px;font-weight:600;color:var(--soft)}
@@ -135,11 +136,11 @@ kbd{background:#eee;border-radius:4px;padding:1px 6px;border:1px solid #ccc}
 .bigscore b{font-size:48px;color:#b26a00}
 .bigscore span{font-size:18px;margin-left:4px}
 .stat{width:100%;border-collapse:collapse;font-size:14px}
-.stat th,.stat td{padding:6px 4px;border-bottom:1px solid #eee;text-align:center}
+.stat th,.stat td{padding:6px 4px;border-bottom:1px solid var(--rule);text-align:center}
 .stat th{color:var(--soft);font-weight:600}
 h3{margin:14px 0 4px;font-size:15px}
 .log{list-style:none;margin:0;padding:0;max-height:180px;overflow:auto;font-size:13.5px}
-.log li{display:flex;gap:8px;align-items:center;padding:5px 2px;border-bottom:1px solid #f3eee8}
+.log li{display:flex;gap:8px;align-items:center;padding:5px 2px;border-bottom:1px solid var(--rule2)}
 .log li .t{color:var(--soft);font-variant-numeric:tabular-nums;width:86px}
 .log li span:nth-child(2){flex:1}
 .log .plus{color:#1f9d55}.log .minus{color:#d9452c}.log .empty{color:var(--soft);justify-content:center}
@@ -231,6 +232,64 @@ h3{margin:14px 0 4px;font-size:15px}
   .toolbar button{padding:6px 2px}
   #tipText,.tip{font-size:12.5px}
 }
+
+/* ===== 主選單新增項目 ===== */
+.menu-row{display:flex;gap:8px;justify-content:center}
+.menu-row .big{flex:1;padding:10px 6px;font-size:16px}
+.foot{text-align:center;line-height:1.7}
+.foot b{color:var(--ink)}
+
+/* ===== 設定／排行榜／作者 ===== */
+.card h3{margin:16px 0 6px}
+.card h3:first-of-type{margin-top:10px}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;padding:10px 4px;border-radius:12px;background:var(--rule);color:var(--soft);font-weight:700;font-size:15px;border:2px solid transparent}
+.seg button.on{background:var(--accent);color:#fff;border-color:var(--ink)}
+.hint-text.left{text-align:left;margin:6px 0 0}
+.name-row{display:flex;gap:8px}
+.name-row input{flex:1;min-width:0;font:inherit;font-size:17px;padding:10px 12px;border-radius:12px;border:2px solid var(--rule);background:var(--card);color:var(--ink);user-select:text;-webkit-user-select:text;outline:none}
+.name-row input:focus{border-color:var(--accent)}
+.name-row .big{padding:10px 18px;font-size:16px;white-space:nowrap}
+.name-msg{min-height:1.3em;margin:6px 0 0;font-size:13.5px;color:var(--soft)}
+.mystat{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mystat div{background:var(--rule);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column}
+.mystat div.wide{grid-column:1 / -1}
+.mystat span{font-size:12.5px;color:var(--soft)}
+.mystat b{font-size:17px}
+.bestrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;margin-top:4px}
+.bestrow span{display:block;font-size:12.5px;color:var(--soft)}
+.bestrow b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+.rank{list-style:none;margin:0 0 6px;padding:0}
+.rank li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;font-size:16px}
+.rank li:nth-child(odd){background:var(--rule)}
+.rank li.mine{outline:2px solid var(--accent2);background:rgba(255,183,3,.18)}
+.rank .rk{width:26px;height:26px;border-radius:50%;background:var(--soft);color:var(--card);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex:none}
+.rank li:nth-child(1) .rk{background:#f2b705;color:#fff}.rank li:nth-child(2) .rk{background:#a8b0b9;color:#fff}.rank li:nth-child(3) .rk{background:#c98a56;color:#fff}
+.rank .nm{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis}
+.rank b{font-variant-numeric:tabular-nums;color:var(--soft)}
+.author{font-size:26px;font-weight:900;margin:10px 0 4px;color:var(--accent)}
+.card a{color:#e76f51;font-weight:700;user-select:text;-webkit-user-select:text}
+
+/* ===== 深色模式 ===== */
+html[data-theme=dark]{
+  --bg:#1e1a22; --ink:#f4ebe6; --soft:#b9aab1; --card:#2d2733; --line:#cdb9ad; --shadow:0 6px 18px rgba(0,0,0,.5);
+  --panel:rgba(255,255,255,.07); --panelStrong:rgba(45,39,51,.94); --idle:#3b3441; --rule:#3c3445; --rule2:#38303f;
+  --ring:#1e1a22; --stroke:#2a2230; --kbd:#3c3445; --kbdb:#554a60;
+}
+html[data-theme=dark] .modal{background:rgba(0,0,0,.62)}
+html[data-theme=dark] .reason.on{background:#4a3f1c;color:#fff0c0}
+html[data-theme=dark] .score{background:#4a3f1c;color:#ffd978}
+html[data-theme=dark] .score b,html[data-theme=dark] .score small{color:#ffd978}
+html[data-theme=dark] .bigscore b{color:#ffcf5a}
+html[data-theme=dark] .log .plus{color:#58d68d}
+html[data-theme=dark] .log .minus{color:#ff8a75}
+html[data-theme=dark] .praise{color:#ff8fb2}
+html[data-theme=dark] .seg button.on{background:#ff8fa3;color:#2a1520;border-color:#f4ebe6}
+html[data-theme=dark] .rank li.mine{background:rgba(255,183,3,.22)}
+html[data-theme=dark] .card a{color:#ffab91}
+html[data-theme=dark] h1{color:#ff9a7a}
+html[data-theme=dark] .toolbar button.insufficient:disabled{filter:brightness(.5) saturate(.5)}
+.card ol.rank{padding-left:0}
 </style>
 </head>
 <body>
@@ -245,9 +304,14 @@ h3{margin:14px 0 4px;font-size:15px}
     </div>
     <div class="menu-btns">
       <button id="btnPlay" class="big primary">🎮 開始遊戲</button>
-      <button id="btnHow" class="big ghost">❓ 遊戲說明</button>
+      <button id="btnSettings" class="big">⚙️ 遊戲設定</button>
+      <button id="btnBoard" class="big">🏅 遊戲排行榜</button>
+      <div class="menu-row">
+        <button id="btnHow" class="big ghost">❓ 遊戲說明</button>
+        <button id="btnAuthor" class="big ghost">✍️ 遊戲作者</button>
+      </div>
     </div>
-    <p class="foot">積分 <b id="statPoints">0</b>　｜　累計完成 <b id="statCleared">0</b> 盤</p>
+    <p class="foot">玩家 <b id="statName"></b><br>積分 <b id="statPoints">0</b>　｜　累計完成 <b id="statCleared">0</b> 盤</p>
   </section>
 
   <!-- 遊戲畫面 -->
@@ -303,6 +367,60 @@ h3{margin:14px 0 4px;font-size:15px}
       </ol>
       <p class="hint-text">鍵盤：<kbd>Z</kbd> 復原　<kbd>H</kbd> 提示　<kbd>R</kbd> 重來　<kbd>Esc</kbd> 返回</p>
       <button class="big primary" data-close>我懂了！</button>
+    </div>
+  </div>
+
+  <!-- 遊戲設定 -->
+  <div id="modalSettings" class="modal">
+    <div class="card">
+      <h2>⚙️ 遊戲設定</h2>
+      <h3>主題選項</h3>
+      <div class="seg" data-key="theme">
+        <button data-v="system">跟隨系統</button><button data-v="light">☀️ 淺色</button><button data-v="dark">🌙 深色</button>
+      </div>
+      <h3>聲音開關</h3>
+      <div class="seg" data-key="sound">
+        <button data-v="on">🔊 開啟</button><button data-v="off">🔇 關閉</button>
+      </div>
+      <p class="hint-text left">包含放下動物的音效、讚美語音與其他遊戲音效。</p>
+      <h3>玩家名稱</h3>
+      <div class="name-row">
+        <input id="nameInput" type="text" maxlength="12" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text">
+        <button id="btnSaveName" class="big primary">儲存</button>
+      </div>
+      <p class="hint-text left">最多 12 個英文字母或數字；留空會使用預設名稱「Guest」加流水號。</p>
+      <p id="nameMsg" class="name-msg"></p>
+      <h3>我的紀錄</h3>
+      <div class="mystat">
+        <div><span>累積積分</span><b id="setPoints">0</b></div>
+        <div><span>通關盤數</span><b id="setWins">0</b></div>
+        <div class="wide"><span>總遊戲時長</span><b id="setTime">—</b></div>
+      </div>
+      <p class="hint-text left" style="margin-bottom:2px">各難易度最短通關時間</p>
+      <div id="setBest" class="bestrow"></div>
+      <button class="big primary" data-close style="margin-top:14px;width:100%">關閉</button>
+    </div>
+  </div>
+
+  <!-- 遊戲排行榜 -->
+  <div id="modalBoard" class="modal">
+    <div class="card">
+      <h2>🏅 遊戲排行榜</h2>
+      <p class="hint-text left" style="margin:0 0 6px">依累積積分排名，前 10 名。</p>
+      <ol id="boardList" class="rank"></ol>
+      <p id="boardMe" class="name-msg"></p>
+      <p id="boardNote" class="hint-text"></p>
+      <button class="big primary" data-close style="width:100%">關閉</button>
+    </div>
+  </div>
+
+  <!-- 遊戲作者 -->
+  <div id="modalAuthor" class="modal">
+    <div class="card center">
+      <h2>✍️ 遊戲作者</h2>
+      <p class="author">Roger Wang</p>
+      <p><a href="mailto:roger.jy.wang@gmail.com">roger.jy.wang@gmail.com</a></p>
+      <button class="big primary" data-close style="width:100%">關閉</button>
     </div>
   </div>
 
@@ -841,8 +959,15 @@ h3{margin:14px 0 4px;font-size:15px}
 
   /* ---------- 存檔 ---------- */
   const SAVE_KEY = 'meowdoko.v2';
-  let save = { points: 0, log: [], stats: {}, round: 0, voice: true };
+  // 排行榜／玩家資料的 Google Apps Script 網址（部署後填入；留空＝只存在本機，排行榜顯示 N/A）
+  const ENDPOINT = '';
+  let save = { points: 0, log: [], stats: {}, round: 0, theme: 'system', name: null, serial: 0, pid: '', playMs: 0, best: {} };
   try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) {}
+  if (typeof save.sound !== 'boolean') save.sound = save.voice !== false;       // 聲音預設開啟（沿用舊版語音開關）
+  if (!/^[A-Za-z0-9-]{8,64}$/.test(save.pid || '')) save.pid = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+  if (!save.serial) save.serial = 10000 + Math.floor(Math.random() * 90000);   // 暫用流水號；連上伺服器後由伺服器配發
+  const pad5 = (n) => String(n).padStart(5, '0');
+  const playerName = () => save.name || 'Guest' + pad5(save.serial);
   function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
   function addPoints(delta, kind, diffKey) {
     save.points += delta;
@@ -859,6 +984,7 @@ h3{margin:14px 0 4px;font-size:15px}
   /* ---------- 音效 ---------- */
   let ac = null;
   function beep(freq, dur, type, vol) {
+    if (!save.sound) return;
     try {
       ac = ac || new (window.AudioContext || window.webkitAudioContext)();
       const o = ac.createOscillator(), g = ac.createGain();
@@ -886,7 +1012,7 @@ h3{margin:14px 0 4px;font-size:15px}
   }
   function speak(text) {
     try {
-      if (!save.voice || !window.speechSynthesis) return;
+      if (!save.sound || !window.speechSynthesis) return;
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text.replace(/！/g, ''));
       u.lang = 'zh-TW'; u.rate = 1.05; u.pitch = 1.25; u.volume = 1;
@@ -962,6 +1088,7 @@ h3{margin:14px 0 4px;font-size:15px}
   }
 
   function refreshMenu() {
+    $('#statName').textContent = playerName();
     $('#statPoints').textContent = save.points;
     $('#statCleared').textContent = totalWins();
   }
@@ -1046,12 +1173,13 @@ h3{margin:14px 0 4px;font-size:15px}
   }
 
   /* ---------- 計時 ---------- */
+  let tick = 0;
   function startTimer() {
     stopTimer();
     let last = Date.now();
     timerId = setInterval(() => {
       const now = Date.now();
-      if (G && !G.over && document.hasFocus()) G.elapsed += now - last;
+      if (G && !G.over && document.hasFocus()) { const d = Math.min(now - last, 1000); G.elapsed += now - last; save.playMs += d; if (++tick % 40 === 0) { persist(); netDirty = true; } }
       last = now;
       $('#gTimer').textContent = fmt(G ? G.elapsed : 0);
     }, 250);
@@ -1287,7 +1415,9 @@ h3{margin:14px 0 4px;font-size:15px}
     const D = DIFFS[G.diff];
     const tierBefore = tier;
     const gain = D.pts * G.lives;                    // 基本分 × 剩下的金魚數
+    if (!save.best[G.diff] || G.elapsed < save.best[G.diff]) save.best[G.diff] = G.elapsed;   // 該難度最短通關時間
     addPoints(gain, 'win', G.diff);
+    netSync(true);
     refreshButtons();
     const msg = `${D.name}（${G.n} × ${G.n}）通關！\n用時 ${fmt(G.elapsed)}　剩餘金魚 ${G.lives} 條\n獲得 ${D.pts} × ${G.lives} ＝ +${gain} 分，目前積分 ${save.points}` +
       (tier > tierBefore ? `\n🎉 晉級「${DIFFS[sel].name}」！金魚增加為 ${fishOfTier(tier)} 條` : (tier >= MAX_TIER ? '\n已是最高等級' : `\n再 ${limitOf(tier) - save.points + 1} 分晉級`));
@@ -1303,7 +1433,7 @@ h3{margin:14px 0 4px;font-size:15px}
   }
 
   function lose() {
-    sfx.lose();
+    sfx.lose(); persist(); netSync(true);
     $('#endCat').innerHTML = animalSVG(G.animal, null, true);
     $('#endTitle').textContent = '金魚都游走了…';
     $('#endMsg').style.whiteSpace = 'normal'; $('#endMsg').textContent = `${ANIMALS[G.animal].name}難過地走掉了，再試一次吧！`;
@@ -1348,10 +1478,121 @@ h3{margin:14px 0 4px;font-size:15px}
     })();
   }
 
+
+  /* ---------- 主題（深色／淺色／跟隨系統） ---------- */
+  const mqDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function applyTheme() {
+    const eff = save.theme === 'system' ? (mqDark && mqDark.matches ? 'dark' : 'light') : save.theme;
+    document.documentElement.dataset.theme = eff;
+    document.documentElement.style.colorScheme = eff;
+  }
+  if (mqDark) { const f = () => { if (save.theme === 'system') applyTheme(); }; mqDark.addEventListener ? mqDark.addEventListener('change', f) : mqDark.addListener(f); }
+  applyTheme();
+
+  /* ---------- 玩家資料同步（Google Apps Script → Google 試算表） ---------- */
+  let netDirty = false, netLast = 0, netTimer = null;
+  const netUrl = (q) => ENDPOINT + (ENDPOINT.includes('?') ? '&' : '?') + q;
+  async function netGet(query) {
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 9000);
+    try { const r = await fetch(netUrl(query), { signal: ctl.signal }); return await r.json(); } finally { clearTimeout(to); }
+  }
+  const netPayload = () => JSON.stringify({
+    action: 'sync', pid: save.pid, name: playerName(), points: save.points, playSec: Math.round(save.playMs / 1000),
+    wins: totalWins(), best: Object.fromEntries(Object.entries(save.best).map(([k, v]) => [k, Math.round(v / 1000)])),
+  });
+  function netSync(force) {
+    if (!ENDPOINT) return;
+    netDirty = true;
+    const wait = Math.max(0, 5000 - (Date.now() - netLast));
+    if (netTimer) return;
+    netTimer = setTimeout(() => {
+      netTimer = null; if (!netDirty) return;
+      netDirty = false; netLast = Date.now();
+      try { fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: netPayload() }); } catch (e) {}
+    }, force ? wait : Math.max(wait, 2000));
+  }
+  async function netRegister() {
+    if (!ENDPOINT || save.registered) return;
+    try {
+      const r = await netGet('action=register&pid=' + encodeURIComponent(save.pid));
+      if (r && r.ok && r.serial) { save.serial = r.serial; save.registered = true; persist(); refreshMenu(); netSync(true); }
+    } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'hidden') return;
+    persist();
+    if (ENDPOINT && navigator.sendBeacon) { try { navigator.sendBeacon(ENDPOINT, new Blob([netPayload()], { type: 'text/plain;charset=utf-8' })); } catch (e) {} }
+  });
+  setInterval(() => { if (netDirty) netSync(false); }, 60000);
+
+  /* ---------- 遊戲設定 ---------- */
+  const fmtHMS = (ms) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 3600)} 小時 ${String(Math.floor(s / 60) % 60).padStart(2, '0')} 分 ${String(s % 60).padStart(2, '0')} 秒`; };
+  function paintSeg() {
+    document.querySelectorAll('#modalSettings .seg').forEach((seg) => {
+      const cur = seg.dataset.key === 'theme' ? save.theme : (save.sound ? 'on' : 'off');
+      seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === cur));
+    });
+  }
+  function paintStats() {
+    $('#setPoints').textContent = save.points;
+    $('#setWins').textContent = totalWins();
+    $('#setTime').textContent = fmtHMS(save.playMs);
+    $('#setBest').innerHTML = Object.keys(DIFFS).map((k) => `<span>${DIFFS[k].name}</span><b>${save.best[k] ? fmt(save.best[k]) : '—'}</b>`).join('');
+  }
+  function openSettings() {
+    paintSeg(); paintStats();
+    $('#nameInput').value = save.name || '';
+    $('#nameInput').placeholder = 'Guest' + pad5(save.serial);
+    $('#nameMsg').textContent = '';
+    $('#modalSettings').classList.add('show');
+  }
+  function saveName() {
+    const v = $('#nameInput').value.trim();
+    if (v && !/^[A-Za-z0-9]{1,12}$/.test(v)) { $('#nameMsg').textContent = '名稱只能使用英文字母與數字，最多 12 個字。'; return; }
+    save.name = v || null; persist(); refreshMenu(); netSync(true);
+    $('#nameMsg').textContent = v ? `已儲存，你的顯示名稱是「${v}」。` : `已恢復預設名稱「${playerName()}」。`;
+    $('#nameInput').value = save.name || '';
+  }
+  function setSound(on) { save.sound = on; persist(); paintSeg(); paintVoice(); if (!on) { try { window.speechSynthesis.cancel(); } catch (e) {} } else sfx.cat(); }
+
+  /* ---------- 遊戲排行榜 ---------- */
+  function drawBoard(rows, note, me) {
+    const list = [];
+    for (let i = 0; i < 10; i++) {
+      const r = rows && rows[i];
+      list.push(`<li class="${r && r.mine ? 'mine' : ''}"><span class="rk">${i + 1}</span><span class="nm">${r ? r.name.replace(/[^A-Za-z0-9]/g, '') : 'N/A'}</span><b>${r ? r.points + ' 分' : 'N/A'}</b></li>`);
+    }
+    $('#boardList').innerHTML = list.join('');
+    $('#boardNote').textContent = note || '';
+    $('#boardMe').textContent = me && me.rank > 10 ? `你目前是第 ${me.rank} 名（${me.points} 分）` : '';
+  }
+  async function openBoard() {
+    drawBoard(null, ENDPOINT ? '讀取中…' : '排行榜尚未連線，暫無資料。');
+    $('#modalBoard').classList.add('show');
+    if (!ENDPOINT) return;
+    try {
+      if (netDirty) netSync(true);
+      const r = await netGet('action=top&pid=' + encodeURIComponent(save.pid));
+      if (!r || !r.ok) throw 0;
+      drawBoard(r.top || [], (r.top || []).length ? '' : '還沒有人上榜，快來搶下第一名！', r.me);
+    } catch (e) { drawBoard(null, '連線失敗，請稍後再試。'); }
+  }
+
   /* ---------- 事件 ---------- */
   $('#logoCat').innerHTML = animalSVG(0);
   $('#btnPlay').onclick = () => show('game');
   $('#btnHow').onclick = () => $('#modalHow').classList.add('show');
+  $('#btnSettings').onclick = openSettings;
+  $('#btnBoard').onclick = openBoard;
+  $('#btnAuthor').onclick = () => $('#modalAuthor').classList.add('show');
+  $('#btnSaveName').onclick = saveName;
+  $('#nameInput').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 12); });
+  $('#nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') saveName(); e.stopPropagation(); });
+  document.querySelectorAll('#modalSettings .seg').forEach((seg) => seg.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (seg.dataset.key === 'theme') { save.theme = b.dataset.v; persist(); applyTheme(); paintSeg(); }
+    else setSound(b.dataset.v === 'on');
+  }));
   document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = closeModals));
   document.querySelectorAll('.diff').forEach((b) => (b.onclick = chooseDiff));
   $('#btnStart').onclick = onStart;
@@ -1359,8 +1600,8 @@ h3{margin:14px 0 4px;font-size:15px}
   $('#btnScore').onclick = openScore;
   $('#btnBack').onclick = () => { closeModals(); show('menu'); };
   const vb = $('#btnVoice');
-  const paintVoice = () => { vb.textContent = save.voice ? '🔊' : '🔇'; vb.title = save.voice ? '讚美語音：開' : '讚美語音：關'; };
-  vb.onclick = () => { save.voice = !save.voice; persist(); paintVoice(); if (save.voice) speak('讚'); else { try { window.speechSynthesis.cancel(); } catch (e) {} } };
+  function paintVoice() { vb.textContent = save.sound ? '🔊' : '🔇'; vb.title = save.sound ? '聲音：開' : '聲音：關'; }
+  vb.onclick = () => { setSound(!save.sound); if (save.sound) speak('讚'); };
   paintVoice();
   $('#btnUndo').onclick = undo;
   $('#btnHint').onclick = hint;
@@ -1373,8 +1614,8 @@ h3{margin:14px 0 4px;font-size:15px}
     else if (k === 'escape') { closeModals(); show('menu'); }
   });
 
-  renderLives(); refreshPoints();
-  window.__meowdoko = { get G() { return G; }, get sel() { return sel; }, get tier() { return tier; }, get save() { return save; }, DIFFS, addPoints, syncLevel, tierOf, limitOf, fishOfTier, beginGame, refreshButtons };
+  renderLives(); refreshPoints(); persist(); netRegister(); netSync(false);
+  window.__meowdoko = { get G() { return G; }, get sel() { return sel; }, get tier() { return tier; }, get save() { return save; }, DIFFS, playerName, openBoard, openSettings, saveName, setSound, applyTheme, addPoints, syncLevel, tierOf, limitOf, fishOfTier, beginGame, refreshButtons };
 })();
 </script>
 </body>
