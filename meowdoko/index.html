@@ -290,6 +290,12 @@ html[data-theme=dark] .card a{color:#ffab91}
 html[data-theme=dark] h1{color:#ff9a7a}
 html[data-theme=dark] .toolbar button.insufficient:disabled{filter:brightness(.5) saturate(.5)}
 .card ol.rank{padding-left:0}
+
+/* 主頁動物園 */
+.zoo{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 4px;width:min(360px,100%);margin-top:3vh;cursor:pointer}
+.zoo-item{display:block;width:52px;height:52px;transition:transform .3s}
+.zoo-item svg{width:100%;height:100%;display:block}
+.foot{margin-top:auto;padding-top:10px}
 </style>
 </head>
 <body>
@@ -311,6 +317,7 @@ html[data-theme=dark] .toolbar button.insufficient:disabled{filter:brightness(.5
         <button id="btnAuthor" class="big ghost">✍️ 遊戲作者</button>
       </div>
     </div>
+    <div id="zoo" class="zoo" title="點一下重新排列"></div>
     <p class="foot">玩家 <b id="statName"></b><br>積分 <b id="statPoints">0</b>　｜　累計完成 <b id="statCleared">0</b> 盤</p>
   </section>
 
@@ -1050,7 +1057,7 @@ html[data-theme=dark] .toolbar button.insufficient:disabled{filter:brightness(.5
   const screens = { menu: $('#menu'), game: $('#game') };
   function show(name) {
     Object.entries(screens).forEach(([k, el]) => el.classList.toggle('active', k === name));
-    if (name === 'menu') { refreshMenu(); stopTimer(); return; }
+    if (name === 'menu') { refreshMenu(); renderZoo(); stopTimer(); return; }
     if (G && G.over) G = null;                   // 已結束的舊局不再保留，回來時顯示新等級的空棋盤
     if (!G) renderIdle();
     else startTimer();
@@ -1578,6 +1585,20 @@ html[data-theme=dark] .toolbar button.insufficient:disabled{filter:brightness(.5
     } catch (e) { drawBoard(null, '連線失敗，請稍後再試。'); }
   }
 
+  /* ---------- 主頁動物園：把所有動物隨機排出來 ---------- */
+  function renderZoo() {
+    const box = $('#zoo'); if (!box) return;
+    box.innerHTML = '';
+    shuffled(ANIMALS.map((a, i) => i)).forEach((i) => {
+      const s = document.createElement('span');
+      s.className = 'zoo-item'; s.title = ANIMALS[i].name;
+      s.style.transform = `rotate(${Math.round(Math.random() * 28 - 14)}deg) translateY(${Math.round(Math.random() * 10 - 5)}px)`;
+      s.innerHTML = animalSVG(i);
+      box.appendChild(s);
+    });
+  }
+  $('#zoo').addEventListener('click', renderZoo);
+
   /* ---------- 事件 ---------- */
   $('#logoCat').innerHTML = animalSVG(0);
   $('#btnPlay').onclick = () => show('game');
@@ -1614,7 +1635,7 @@ html[data-theme=dark] .toolbar button.insufficient:disabled{filter:brightness(.5
     else if (k === 'escape') { closeModals(); show('menu'); }
   });
 
-  renderLives(); refreshPoints(); persist(); netRegister(); netSync(false);
+  renderLives(); refreshPoints(); renderZoo(); persist(); netRegister(); netSync(false);
   window.__meowdoko = { get G() { return G; }, get sel() { return sel; }, get tier() { return tier; }, get save() { return save; }, DIFFS, playerName, openBoard, openSettings, saveName, setSound, applyTheme, addPoints, syncLevel, tierOf, limitOf, fishOfTier, beginGame, refreshButtons };
 })();
 </script>
