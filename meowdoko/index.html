@@ -960,7 +960,7 @@ html[data-theme=dark] .toolbar button.insufficient:disabled{filter:brightness(.5
   /* ---------- 存檔 ---------- */
   const SAVE_KEY = 'meowdoko.v2';
   // 排行榜／玩家資料的 Google Apps Script 網址（部署後填入；留空＝只存在本機，排行榜顯示 N/A）
-  const ENDPOINT = '';
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbytkpu8X4IDWWXgpCoeVHk_G-v2JOswOuBiaEhYqeA6jDx9jonIntvkiqmarzNDOvM/exec';
   let save = { points: 0, log: [], stats: {}, round: 0, theme: 'system', name: null, serial: 0, pid: '', playMs: 0, best: {} };
   try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) {}
   if (typeof save.sound !== 'boolean') save.sound = save.voice !== false;       // 聲音預設開啟（沿用舊版語音開關）
