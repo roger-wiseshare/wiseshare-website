@@ -19,8 +19,7 @@ h1 small{font-size:13px;font-weight:400;opacity:.7;margin-left:6px}
 button,select{font:inherit;border:0;border-radius:8px;padding:7px 14px;background:#e8b93a;color:#2a1e00;font-weight:700;cursor:pointer}
 button.alt,select{background:var(--altbg);color:var(--altfg)}
 button:disabled{opacity:.4;cursor:not-allowed}
-:root{--bs:min(calc(100dvh - 76px),calc(100vw - 450px))}
-body.learn{--bs:min(calc(100dvh - 76px),calc(100vw - 690px))}
+:root{--bs:min(calc(100dvh - 76px),calc(100vw - 690px))}
 #stage{display:flex;gap:16px;justify-content:center;align-items:flex-start}
 #cv{width:var(--bs);height:var(--bs);border-radius:10px;box-shadow:0 6px 24px #0007;touch-action:manipulation;cursor:pointer;flex:none}
 #panel{width:390px;max-width:100%;flex:none;background:var(--panel);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;font-size:17px}
@@ -36,10 +35,10 @@ body.learn{--bs:min(calc(100dvh - 76px),calc(100vw - 690px))}
 .row select{width:100%;font-size:17px;padding:8px 10px}
 .stat{font-size:16px;text-align:center;opacity:.95;line-height:1.5}
 .rule{font-size:15px;line-height:1.65;opacity:.85}
-#learn{display:none;flex-direction:column;gap:10px;width:220px;flex:none}
-body.learn #learn{display:flex}
+#learn{display:flex;flex-direction:column;gap:10px;width:220px;flex:none}
 .lt{font-size:15px;font-weight:800;text-align:center}
-.card{background:var(--panel);border-radius:12px;padding:8px;text-align:center}
+.card{background:var(--panel);border-radius:12px;padding:8px;text-align:center;min-height:208px}
+.lt{min-height:1.4em}
 .card canvas{width:104px;height:104px;display:block;margin:0 auto 4px;border-radius:6px}
 .card b{font-size:17px}.card small{display:block;font-size:12.5px;line-height:1.4;opacity:.85}
 #banner{position:fixed;z-index:90;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;display:none}
@@ -58,14 +57,13 @@ body.learn #learn{display:flex}
 .box{background:var(--panel);color:var(--fg);border-radius:16px;padding:18px;max-width:360px;width:100%}
 .box input{width:100%;font:inherit;padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
 @media(max-aspect-ratio:1/1){
-  :root,body.learn{--bs:min(96vw,calc(100dvh - 360px))}
-  body.learn{--bs:min(96vw,calc(100dvh - 520px))}
+  :root{--bs:min(96vw,calc(100dvh - 520px))}
   #stage{flex-direction:column;align-items:center;gap:10px}
   #panel{width:min(96vw,560px);transform:none!important}
   #learn{flex-direction:row;width:min(96vw,560px)}.lt{display:none}
-  .card{flex:1;padding:4px}.card canvas{width:100%;height:auto;aspect-ratio:1}.card small{font-size:11px}
+  .card{flex:1;padding:4px;min-height:150px}.card canvas{width:100%;height:auto;aspect-ratio:1}.card small{font-size:11px}
 }
-@media(max-height:560px) and (min-aspect-ratio:1/1){:root{--bs:min(calc(100dvh - 56px),calc(100vw - 450px))}body.learn{--bs:min(calc(100dvh - 56px),calc(100vw - 690px))}h1 small{display:none}}
+@media(max-height:560px) and (min-aspect-ratio:1/1){:root{--bs:min(calc(100dvh - 56px),calc(100vw - 690px))}h1 small{display:none}}
 </style>
 </head>
 <body>
@@ -109,7 +107,8 @@ const OPENINGS=[
 let OPS=[];
 function rollOps(){const a=OPENINGS.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}OPS=a.slice(0,3);}
 function renderLearn(){
-  const box=$('learn');if(!box||G.level!=='learn')return;
+  const box=$('learn');if(!box)return;
+  if(G.level!=='learn'){box.innerHTML='<div class="lt">&nbsp;</div>'+'<div class="card"></div>'.repeat(3);return;}
   if(!OPS.length)rollOps();
   box.innerHTML='<div class="lt">📖 隨機三種起手式</div>'+OPS.map((o,i)=>`<div class="card"><canvas id="oc${i}" width="256" height="256"></canvas><b>${o.n}</b>（${o.t}）<small>${o.c}<br>${o.d}</small></div>`).join('');
   OPS.forEach((o,i)=>drawOpening($('oc'+i),o));
@@ -131,8 +130,7 @@ function drawOpening(c,o){
   });
 }
 function applyLevelUI(){
-  document.body.classList.toggle('learn',G.level==='learn');
-  if(G.level==='learn')renderLearn();
+  renderLearn();
   layoutPanel();draw();
 }
 /* 設定框：頂端與棋盤上緣對齊；水平置中於上方四個按鈕 */
