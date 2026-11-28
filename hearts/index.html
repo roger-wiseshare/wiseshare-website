@@ -418,7 +418,24 @@ function playCard(p,c){
   else{render();next();}
 }
 
-const PIG_SVG=`<svg viewBox="0 0 120 80"><g class="bob"><path class="tail" d="M16 34c-10-4-12 6-6 8s2 8-4 6" fill="none" stroke="#e88aa0" stroke-width="4" stroke-linecap="round"/><rect class="lg2" x="30" y="52" width="9" height="22" rx="4" fill="#d9708a"/><rect class="lg4" x="78" y="52" width="9" height="22" rx="4" fill="#d9708a"/><ellipse cx="58" cy="40" rx="42" ry="26" fill="#f4a3b6"/><rect class="lg1" x="40" y="52" width="9" height="22" rx="4" fill="#f4a3b6"/><rect class="lg3" x="88" y="52" width="9" height="22" rx="4" fill="#f4a3b6"/><circle cx="96" cy="32" r="20" fill="#f6b0c0"/><path d="M86 16l-4-12 14 6z" fill="#e88aa0"/><path d="M104 16l6-10 4 14z" fill="#e88aa0"/><ellipse cx="110" cy="38" rx="10" ry="8" fill="#e88aa0"/><circle cx="107" cy="38" r="1.8" fill="#8a3550"/><circle cx="113" cy="38" r="1.8" fill="#8a3550"/><circle cx="98" cy="26" r="2.6" fill="#222"/></g></svg>`;
+const PIG_SVG=`<svg viewBox="0 0 140 90"><defs><linearGradient id="pg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc4cf"/><stop offset=".55" stop-color="#f4a0b3"/><stop offset="1" stop-color="#d9788f"/></linearGradient><linearGradient id="pg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eb94a8"/><stop offset="1" stop-color="#c8647c"/></linearGradient><radialGradient id="pg3" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ffd3db"/><stop offset="1" stop-color="#e9899f"/></radialGradient></defs>
+<ellipse cx="66" cy="84" rx="48" ry="4" fill="#0004"/>
+<g class="bob">
+<path class="tail" d="M20 38c-10-8-18 2-9 6 7 3 0 9-6 6" fill="none" stroke="#d9788f" stroke-width="3.5" stroke-linecap="round"/>
+<g class="lg2"><path d="M34 58h11l-1 22h-10z" fill="url(#pg2)"/><path d="M33 78h12v6h-12z" fill="#4a2a30" rx="2"/></g>
+<g class="lg4"><path d="M84 58h11l-1 22h-10z" fill="url(#pg2)"/><path d="M83 78h12v6h-12z" fill="#4a2a30"/></g>
+<path d="M14 50C10 30 28 18 58 18c22 0 38 6 48 16l8 6c4 8 2 18-6 24-6 6-22 8-50 8S18 68 14 50z" fill="url(#pg1)"/>
+<path d="M22 62c14 8 54 10 80 0-4 12-24 14-42 14S26 74 22 62z" fill="#ffd9e0" opacity=".55"/>
+<g class="lg1"><path d="M46 58h12l-1 22H45z" fill="url(#pg1)"/><path d="M44 78h14v6H44z" fill="#4a2a30"/></g>
+<g class="lg3"><path d="M96 58h12l-1 22H95z" fill="url(#pg1)"/><path d="M94 78h14v6H94z" fill="#4a2a30"/></g>
+<path d="M100 26c10-8 24-6 30 4 4 8 2 18-4 24-6 6-16 8-26 4-6-4-10-14-4-24z" fill="url(#pg3)"/>
+<path d="M96 22l-4-14 18 8z" fill="#e0788f"/><path d="M98 20l-2-9 11 5z" fill="#f7a9ba"/>
+<rect x="120" y="36" width="17" height="19" rx="7" fill="#f08ea5"/>
+<ellipse cx="130" cy="41" rx="2.2" ry="3.2" fill="#8a3550"/><ellipse cx="130" cy="50" rx="2.2" ry="3.2" fill="#8a3550"/>
+<circle cx="112" cy="32" r="3.6" fill="#2a1418"/><circle cx="113" cy="30.8" r="1.2" fill="#fff"/>
+<ellipse cx="106" cy="45" rx="5" ry="3.4" fill="#ff7f9e" opacity=".5"/>
+<path d="M108 54q8 5 16 0" fill="none" stroke="#b8556d" stroke-width="1.6" stroke-linecap="round"/>
+</g></svg>`;
 function runPig(from,to,ms){
   const tk=$('trick'),tr=tk.getBoundingClientRect(),fr=from.getBoundingClientRect(),tt=to.getBoundingClientRect();
   const w=fr.width*1.5,sc=tr.width?1:1;
@@ -426,7 +443,10 @@ function runPig(from,to,ms){
   const fx=fr.left+fr.width/2-tr.left-w/2,fy=fr.top+fr.height/2-tr.top-w*.35;
   el.style.cssText=`width:${w}px;left:${fx}px;top:${fy}px`;
   const dx=(tt.left+tt.width/2)-(fr.left+fr.width/2),dy=(tt.top+tt.height/2)-(fr.top+fr.height/2);
-  if(dx<0)el.querySelector('svg').style.transform='scaleX(-1)';
+  const sv=el.querySelector('svg');
+  // 預設豬頭朝右、腳朝下；依移動方向轉向（朝上：豬腳朝左；朝下：豬腳朝右）
+  if(Math.abs(dx)>=Math.abs(dy))sv.style.transform=dx<0?'scaleX(-1)':'';
+  else sv.style.transform=dy<0?'rotate(90deg) scaleX(-1)':'rotate(-90deg) scaleX(-1)';
   tk.appendChild(el);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.opacity='1';el.style.transition=`opacity .25s,translate ${ms}ms ease-in-out`;el.style.translate=`${dx}px ${dy}px`;}));
   setTimeout(()=>{el.style.opacity='0';},ms-150);
