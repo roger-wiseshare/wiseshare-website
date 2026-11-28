@@ -74,6 +74,32 @@ tr.tot td{font-weight:700;background:var(--tag)}
 #modal .box{color:var(--fg);background:var(--panel);border-radius:16px;padding:18px;max-width:460px;width:100%;box-shadow:0 8px 30px #000a}
 #modal h2{margin:0 0 10px}
 .lo{color:var(--hl);font-weight:700}
+
+/* ===== 立體化 ===== */
+#stage{perspective:1500px;perspective-origin:50% 120%}
+#board{transform:rotateX(7deg);transform-origin:50% 100%;transform-style:preserve-3d;
+ background:radial-gradient(ellipse at 50% 38%,#2a8656 0%,#1b6a43 38%,#0f3f29 78%,#0a2c1c 100%);
+ box-shadow:inset 0 0 0 .55cqw #7a4e27,inset 0 0 0 .8cqw #4a2c12,inset 0 0 0 1cqw #2a1808,inset 0 0 7cqw 1cqw #000c,0 2.2cqw 3.2cqw -.6cqw #000c,0 .6cqw 0 #1c1008}
+#board::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(172deg,#ffffff26 0%,#ffffff00 32%),repeating-linear-gradient(90deg,#ffffff05 0 2px,#0000 2px 5px);mix-blend-mode:soft-light}
+#board{position:relative}
+.card{background:linear-gradient(155deg,#ffffff 0%,#fbf9f2 55%,#ece7da 100%);border-radius:7px;
+ box-shadow:1px 1px 0 #d8d2c2,2px 2px 0 #c4bdab,3px 4px 0 #b3ac99,4px 8px 10px #000a;}
+.card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(120deg,#fff9 0%,#fff0 38%);}
+#hand{padding-top:calc(var(--ch)*.18)}
+#hand .card{transform-origin:50% 140%;--lift:0px;transform:translateY(calc(var(--cw)*var(--dy,0) + var(--lift))) rotate(var(--rot,0deg));transition:transform .16s ease,box-shadow .16s ease,filter .16s}
+#hand .card.ok:hover{--lift:-14px;transform:translateY(calc(var(--cw)*var(--dy,0) + var(--lift))) rotate(var(--rot,0deg)) translateZ(30px) scale(1.06);box-shadow:1px 1px 0 #d8d2c2,2px 2px 0 #c4bdab,3px 4px 0 #b3ac99,8px 18px 18px #000b;z-index:50!important}
+#hand .card.sel{--lift:-22px;transform:translateY(calc(var(--cw)*var(--dy,0) + var(--lift))) rotate(var(--rot,0deg))}
+#hand .card.new{box-shadow:0 0 0 3px #5fd0ff,3px 6px 10px #000a}
+.back{border-radius:5px;background:repeating-linear-gradient(45deg,#2a4f9c,#2a4f9c 4px,#3b66bf 4px,#3b66bf 8px);box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 3px #1c3a7a,1px 1px 0 #c8c8c8,2px 3px 0 #9a9a9a,3px 6px 7px #000a;border:0}
+.tc{box-shadow:1px 1px 0 #d8d2c2,2px 2px 0 #c4bdab,3px 4px 0 #b3ac99,6px 12px 12px #000b}
+.slot.p0 .tc{transform:rotate(-3deg)}.slot.p1 .tc{transform:rotate(5deg)}.slot.p2 .tc{transform:rotate(2deg)}.slot.p3 .tc{transform:rotate(-6deg)}
+@keyframes dropIn{from{opacity:0;translate:0 -46px;scale:1.25}to{opacity:1;translate:0 0;scale:1}}
+@keyframes fromW{from{opacity:0;translate:-90px 0;scale:1.15}to{opacity:1;translate:0 0;scale:1}}
+@keyframes fromE{from{opacity:0;translate:90px 0;scale:1.15}to{opacity:1;translate:0 0;scale:1}}
+@keyframes fromS{from{opacity:0;translate:0 90px;scale:1.2}to{opacity:1;translate:0 0;scale:1}}
+.fresh.f0{animation:fromS .28s cubic-bezier(.2,.8,.3,1)}.fresh.f1{animation:fromW .28s cubic-bezier(.2,.8,.3,1)}.fresh.f2{animation:dropIn .28s cubic-bezier(.2,.8,.3,1)}.fresh.f3{animation:fromE .28s cubic-bezier(.2,.8,.3,1)}
+.seat .nm{box-shadow:0 2px 0 #0006,0 4px 8px #0007}
+@media(prefers-reduced-motion:reduce){.fresh{animation:none!important}#board{transform:none}}
 </style>
 </head>
 <body>
@@ -81,7 +107,7 @@ tr.tot td{font-weight:700;background:var(--tag)}
 <header>
   <h1>傷心小棧<small>Hearts</small></h1>
   <div><span class="tag" id="round"></span><span class="tag" id="dir"></span>
-  <button class="alt" id="hintBtn">提示</button> <button class="alt" id="nameBtn">更改名稱</button> <button class="alt" id="themeBtn">外觀：自動</button> <button class="alt" id="newBtn">重新開始</button></div>
+  <button class="alt" id="hintBtn">提示</button> <button class="alt" id="nameBtn">更改名稱</button> <button class="alt" id="levelBtn">難度：專家</button> <button class="alt" id="themeBtn">外觀：自動</button> <button class="alt" id="newBtn">重新開始</button></div>
 </header>
 <div id="stage"><div id="board">
   <div class="seat north" id="seat2"></div>
@@ -134,7 +160,7 @@ function startRound(){
   G.hands=[0,1,2,3].map(i=>sortHand(d.slice(i*13,i*13+13)));
   G.taken=[[],[],[],[]];
   G.dir=['left','right','across','none'][G.round%4];
-  G.trick=[];G.broken=false;G.firstTrick=true;G.played=new Set();
+  G.trick=[];G.broken=false;G.firstTrick=true;G.played=new Set();G.void=[{},{},{},{}];G.given=null;G.fresh=null;
   G.sel=new Set();G.recv=new Set();G.hint=null;G.note='';
   if(G.dir==='none'){beginPlay();}
   else{G.phase='pass';G.msg='請選出 3 張牌，傳給'+dirTxt(G.dir)+'。（建議先傳掉大牌與黑桃 Q）';render();}
@@ -154,6 +180,7 @@ function aiPass(p){
 function doPass(){
   const out=[0,1,2,3].map(i=>i===0?G.hands[0].filter(c=>G.sel.has(c.id)):aiPass(i));
   const off={left:1,right:3,across:2}[G.dir];
+  G.given={};out.forEach((cs,i)=>{G.given[i]={to:(i+off)%4,cards:cs.slice()};});
   out.forEach((cs,i)=>cs.forEach(c=>{G.hands[i].splice(G.hands[i].findIndex(x=>x.id===c.id),1);}));
   out.forEach((cs,i)=>{const t=(i+off)%4;G.hands[t].push(...cs);if(t===0)cs.forEach(c=>G.recv.add(c.id));});
   G.hands.forEach(sortHand);G.sel=new Set();
@@ -166,47 +193,169 @@ function beginPlay(){
   render();next();
 }
 
-function legal(p){
-  const h=G.hands[p];
-  if(G.trick.length===0){
-    if(G.firstTrick)return h.filter(c=>c.id==='C2');
-    if(!G.broken){const non=h.filter(c=>c.s!=='H');if(non.length)return non;}
+const LV_NAMES=['普通','困難','專家'];
+let LEVEL=2;try{const v=parseInt(localStorage.getItem('hearts_level'));if(v>=0&&v<=2)LEVEL=v;}catch(e){}
+const SAMPLES=[0,36,100];
+const ALL=mk();
+
+/* ---- 規則（對任意狀態 S 通用，供模擬使用）---- */
+function legalS(S,p){
+  const h=S.hands[p];
+  if(S.trick.length===0){
+    if(S.firstTrick)return h.filter(c=>c.id==='C2');
+    if(!S.broken){const non=h.filter(c=>c.s!=='H');if(non.length)return non;}
     return h;
   }
-  const ls=G.trick[0].card.s;const f=h.filter(c=>c.s===ls);
+  const ls=S.trick[0].card.s;const f=h.filter(c=>c.s===ls);
   if(f.length)return f;
-  if(G.firstTrick){const safe=h.filter(c=>pts(c)===0);if(safe.length)return safe;}
+  if(S.firstTrick){const safe=h.filter(c=>pts(c)===0);if(safe.length)return safe;}
   return h;
 }
+const legal=p=>legalS(G,p);
+const isQ=c=>c.s==='S'&&c.r===12;
 
-function aiLead(p,opts){
-  if(G.firstTrick)return opts[0];
-  const h=G.hands[p];const hasQ=h.some(c=>c.s==='S'&&c.r===12);const qOut=G.played.has('S12');
-  const cost=c=>{let v=c.r;if(c.s==='H')v+=30;
-    if(c.s==='S'){if(!qOut&&(hasQ||c.r>=12))v+=40;else if(!qOut&&!hasQ&&c.r<12)v-=8;}
-    return v;};
-  return [...opts].sort((a,b)=>cost(a)-cost(b))[0];
+/* 已吃下全部已出分數的人（至少 4 分）＝疑似正在衝「打包全收」 */
+function shooterOf(S){
+  const t=S.tp[0]+S.tp[1]+S.tp[2]+S.tp[3];
+  if(t<4)return -1;
+  for(let i=0;i<4;i++)if(S.tp[i]===t)return i;
+  return -1;
 }
 
-function aiChoose(p){
-  const opts=legal(p);if(opts.length===1)return opts[0];
-  if(G.trick.length===0)return aiLead(p,opts);
-  const h=G.hands[p];const ls=G.trick[0].card.s;
-  const isQ=c=>c.s==='S'&&c.r===12;
+/* ---- 舊版（普通）AI ---- */
+function legacyChoose(S,p){
+  const opts=legalS(S,p);if(opts.length===1)return opts[0];
+  const h=S.hands[p];const hasQ=h.some(isQ);const qOut=S.played.has('S12');
+  if(S.trick.length===0){
+    if(S.firstTrick)return opts[0];
+    const cost=c=>{let v=c.r;if(c.s==='H')v+=30;
+      if(c.s==='S'){if(!qOut&&(hasQ||c.r>=12))v+=40;else if(!qOut&&!hasQ&&c.r<12)v-=8;}
+      return v;};
+    return [...opts].sort((a,b)=>cost(a)-cost(b))[0];
+  }
+  const ls=S.trick[0].card.s;
   if(opts[0].s===ls){
-    const win=Math.max(...G.trick.filter(t=>t.card.s===ls).map(t=>t.card.r));
+    const win=Math.max(...S.trick.filter(t=>t.card.s===ls).map(t=>t.card.r));
     if(ls==='S'){const q=opts.find(isQ);if(q&&win>12)return q;}
     const lower=opts.filter(c=>c.r<win).sort((a,b)=>b.r-a.r);
     if(lower.length)return lower[0];
     const asc=[...opts].sort((a,b)=>a.r-b.r);
     const nq=asc.filter(c=>!isQ(c));const arr=nq.length?nq:asc;
-    return G.trick.length===3?arr[arr.length-1]:arr[0];
+    return S.trick.length===3?arr[arr.length-1]:arr[0];
   }
   const q=opts.find(isQ);if(q)return q;
   const hs=opts.filter(c=>c.s==='H').sort((a,b)=>b.r-a.r);if(hs.length)return hs[0];
-  const hasQ=h.some(isQ);
   const dg=c=>c.r+(c.s==='S'&&c.r>=13&&!hasQ?20:0);
   return [...opts].sort((a,b)=>dg(b)-dg(a))[0];
+}
+
+/* ---- 啟發式 AI（困難／專家的模擬基礎，含防打包）---- */
+function chooseH(S,p){
+  const opts=legalS(S,p);if(opts.length===1)return opts[0];
+  const h=S.hands[p];
+  const hasQ=h.some(isQ),qOut=S.played.has('S12');
+  const sh=shooterOf(S),me=sh===p,def=sh>=0&&sh!==p;
+  if(S.trick.length===0){
+    if(S.firstTrick)return opts[0];
+    if(me)return [...opts].sort((a,b)=>b.r-a.r)[0];
+    const cnt={C:0,D:0,S:0,H:0};h.forEach(c=>cnt[c.s]++);
+    const cost=c=>{let v=c.r;if(c.s==='H')v+=30;
+      if(c.s==='S'){if(!qOut&&(hasQ||c.r>=12))v+=40;else if(!qOut&&!hasQ&&c.r<12)v-=8;}
+      if(cnt[c.s]<=2)v-=2;
+      return v;};
+    return [...opts].sort((a,b)=>cost(a)-cost(b))[0];
+  }
+  const ls=S.trick[0].card.s;
+  let win=0,wp=-1,tp=0;
+  for(const t of S.trick){tp+=pts(t.card);if(t.card.s===ls&&t.card.r>win){win=t.card.r;wp=t.p;}}
+  if(opts[0].s===ls){
+    const last=S.trick.length===3;
+    const asc=[...opts].sort((a,b)=>a.r-b.r);
+    const higher=asc.filter(c=>c.r>win);
+    if(me)return higher.length?higher[0]:asc[0];
+    if(def&&tp>0&&higher.length){const nq=higher.filter(c=>!isQ(c));return (nq.length?nq:higher)[0];}
+    if(ls==='S'){const q=opts.find(isQ);if(q&&win>12)return q;}
+    const lower=opts.filter(c=>c.r<win).sort((a,b)=>b.r-a.r);
+    if(lower.length)return lower[0];
+    const nq=asc.filter(c=>!isQ(c));const arr=nq.length?nq:asc;
+    return last?arr[arr.length-1]:arr[0];
+  }
+  // 沒有該花色：墊牌
+  if(me){const np=opts.filter(c=>pts(c)===0).sort((a,b)=>a.r-b.r);if(np.length)return np[0];}
+  if(def&&wp===sh){const np=opts.filter(c=>pts(c)===0).sort((a,b)=>b.r-a.r);if(np.length)return np[0];}
+  const q=opts.find(isQ);if(q)return q;
+  const hs=opts.filter(c=>c.s==='H').sort((a,b)=>b.r-a.r);if(hs.length)return hs[0];
+  const dg=c=>c.r+(c.s==='S'&&c.r>=13&&!hasQ?20:0);
+  return [...opts].sort((a,b)=>dg(b)-dg(a))[0];
+}
+
+/* ---- 模擬：蒙地卡羅（記牌＋缺門推理＋隨機補牌＋快速推演）---- */
+function playS(S,p,c){
+  const h=S.hands[p];h.splice(h.indexOf(c),1);
+  S.trick.push({p,card:c});S.played.add(c.id);if(c.s==='H')S.broken=true;
+  S.turn=(p+1)%4;
+  if(S.trick.length===4){
+    const ls=S.trick[0].card.s;let w=S.trick[0],pt=0;
+    for(const t of S.trick){pt+=pts(t.card);if(t.card.s===ls&&t.card.r>w.card.r)w=t;}
+    S.tp[w.p]+=pt;S.firstTrick=false;S.trick=[];S.turn=w.p;
+  }
+}
+function rollout(S){
+  for(;;){
+    const p=S.turn;if(S.hands[p].length===0)break;
+    playS(S,p,chooseH(S,p));
+  }
+  const m=S.tp.indexOf(26);
+  return m>=0?S.tp.map((_,i)=>i===m?0:26):S.tp;
+}
+function sampleDeal(p,unseen,need,fixed){
+  for(let att=0;att<25;att++){
+    const hands=[[],[],[],[]];hands[p]=G.hands[p].slice();
+    const rem=need.slice();const pool=[];
+    for(const c of unseen){const f=fixed[c.id];if(f!=null&&rem[f]>0){hands[f].push(c);rem[f]--;}else pool.push(c);}
+    const elig=c=>{let n=0;for(let q=0;q<4;q++)if(q!==p&&rem[q]>0&&!G.void[q][c.s])n++;return n;};
+    shuffle(pool);
+    const keyed=pool.map(c=>({c,k:elig(c)+Math.random()*.5})).sort((a,b)=>a.k-b.k);
+    let ok=true;
+    for(const {c} of keyed){
+      const cand=[];for(let q=0;q<4;q++)if(q!==p&&rem[q]>0&&!G.void[q][c.s])cand.push(q);
+      if(!cand.length){ok=false;break;}
+      const q=cand[(Math.random()*cand.length)|0];hands[q].push(c);rem[q]--;
+    }
+    if(ok)return hands;
+  }
+  return null;
+}
+function pimc(p,N){
+  const opts=legalS(G,p);
+  if(opts.length===1)return opts[0];
+  if(G.firstTrick&&G.trick.length===0)return opts[0];
+  const seen=new Set(G.played);G.hands[p].forEach(c=>seen.add(c.id));
+  const unseen=ALL.filter(c=>!seen.has(c.id));
+  const need=[0,1,2,3].map(i=>i===p?0:G.hands[i].length);
+  const fixed={};
+  if(G.given&&G.given[p])for(const c of G.given[p].cards)if(!seen.has(c.id))fixed[c.id]=G.given[p].to;
+  const base=[0,1,2,3].map(ptsOf);
+  const left=G.hands[p].length;
+  const n=left>=11?Math.round(N*.7):N;
+  const tot=new Float64Array(opts.length);let done=0;
+  for(let s=0;s<n;s++){
+    const hands=sampleDeal(p,unseen,need,fixed);if(!hands)continue;
+    for(let k=0;k<opts.length;k++){
+      const S={hands:hands.map(h=>h.slice()),trick:G.trick.map(t=>({p:t.p,card:t.card})),firstTrick:G.firstTrick,broken:G.broken,played:new Set(G.played),tp:base.slice(),turn:G.turn};
+      playS(S,p,S.hands[p][S.hands[p].indexOf(opts[k])]);
+      tot[k]+=rollout(S)[p];
+    }
+    done++;
+  }
+  if(!done)return chooseH(G,p);
+  let bi=0,bv=1e9;
+  for(let k=0;k<opts.length;k++){const v=tot[k]/done+Math.random()*.001;if(v<bv){bv=v;bi=k;}}
+  return opts[bi];
+}
+function aiChoose(p){
+  if(LEVEL===0)return legacyChoose(G,p);
+  return pimc(p,SAMPLES[LEVEL]);
 }
 
 function humanPrompt(){
@@ -224,6 +373,8 @@ function next(){
 
 function playCard(p,c){
   const h=G.hands[p];h.splice(h.findIndex(x=>x.id===c.id),1);
+  if(G.trick.length>0&&c.s!==G.trick[0].card.s)G.void[p][G.trick[0].card.s]=true;
+  G.fresh=c.id;
   G.trick.push({p,card:c});G.played.add(c.id);if(c.s==='H')G.broken=true;
   G.hint=null;G.note='';G.turn=(p+1)%4;
   if(G.trick.length===4){G.msg='本墩結束，結算中…';render();later(resolveTrick,1100);}
@@ -269,7 +420,8 @@ function render(){
     h+=`<div class="inf">${info}${i>0?`｜剩 ${G.hands[i].length} 張`:''}</div>`;
     $('seat'+i).innerHTML=h;
   }
-  $('trick').innerHTML=G.trick.map(t=>`<div class="slot p${t.p}">${cardHTML(t.card)}</div>`).join('');
+  const fr=G.fresh&&G.fresh!==G.anim?G.fresh:null;if(fr)G.anim=fr;
+  $('trick').innerHTML=G.trick.map(t=>`<div class="slot p${t.p}">${cardHTML(t.card,(fr===t.card.id?'fresh f'+t.p:'')+' tc')}</div>`).join('');
   const legalIds=new Set(G.phase==='play'&&G.turn===0&&G.trick.length<4?legal(0).map(c=>c.id):[]);
   $('hand').innerHTML=G.hands[0].map(c=>{
     let cls='';
@@ -279,6 +431,8 @@ function render(){
     if(G.hint===c.id)cls+=' hint';
     return cardHTML(c,cls,`data-id="${c.id}"`);
   }).join('');
+  {const hc=$('hand').children,n=hc.length,mid=(n-1)/2,step=Math.min(1.9,18/Math.max(n,1));
+   for(let i=0;i<n;i++){const d=i-mid;hc[i].style.setProperty('--rot',(d*step).toFixed(2)+'deg');hc[i].style.setProperty('--dy',(d*d*.0025).toFixed(4));hc[i].style.zIndex=i;}}
   $('passBtn').style.visibility=G.phase==='pass'?'visible':'hidden';
   $('passBtn').disabled=G.sel.size!==3;
   $('passBtn').textContent=`確認傳牌（已選 ${G.sel.size}／3）`;
@@ -342,8 +496,10 @@ $('hintBtn').onclick=()=>{
 };
 let THEME='auto';try{THEME=localStorage.getItem('hearts_theme')||'auto';}catch(e){}
 function applyTheme(){document.documentElement.setAttribute('data-theme',THEME);$('themeBtn').textContent='外觀：'+({auto:'自動',light:'淺色',dark:'深色'}[THEME]);}
+function applyLevel(){$('levelBtn').textContent='難度：'+LV_NAMES[LEVEL];}
+$('levelBtn').onclick=()=>{LEVEL=(LEVEL+1)%3;try{localStorage.setItem('hearts_level',LEVEL);}catch(e){}applyLevel();if(G){G.hint=null;}};
 $('themeBtn').onclick=()=>{THEME={auto:'light',light:'dark',dark:'auto'}[THEME];try{localStorage.setItem('hearts_theme',THEME);}catch(e){}applyTheme();};
-if(typeof window!=='undefined'&&!window.__TEST__){applyTheme();newGame();}
+if(typeof window!=='undefined'&&!window.__TEST__){applyTheme();applyLevel();newGame();}
 </script>
 </body>
 </html>
