@@ -100,6 +100,15 @@ tr.tot td{font-weight:700;background:var(--tag)}
 .fresh.f0{animation:fromS .28s cubic-bezier(.2,.8,.3,1)}.fresh.f1{animation:fromW .28s cubic-bezier(.2,.8,.3,1)}.fresh.f2{animation:dropIn .28s cubic-bezier(.2,.8,.3,1)}.fresh.f3{animation:fromE .28s cubic-bezier(.2,.8,.3,1)}
 .seat .nm{box-shadow:0 2px 0 #0006,0 4px 8px #0007}
 @media(prefers-reduced-motion:reduce){.fresh{animation:none!important}#board{transform:none}}
+
+.pig{position:absolute;z-index:9;pointer-events:none;opacity:0;transition:opacity .25s}
+.pig svg{width:100%;height:auto;display:block;overflow:visible;filter:drop-shadow(2px 6px 4px #0009)}
+.pig .bob{animation:pigbob .28s ease-in-out infinite alternate}
+.pig .lg1,.pig .lg3{animation:legA .28s ease-in-out infinite alternate;transform-origin:50% 0;transform-box:fill-box}
+.pig .lg2,.pig .lg4{animation:legB .28s ease-in-out infinite alternate;transform-origin:50% 0;transform-box:fill-box}
+@keyframes pigbob{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-6px) rotate(2deg)}}
+@keyframes legA{from{transform:rotate(25deg)}to{transform:rotate(-25deg)}}
+@keyframes legB{from{transform:rotate(-25deg)}to{transform:rotate(25deg)}}
 </style>
 </head>
 <body>
@@ -409,6 +418,19 @@ function playCard(p,c){
   else{render();next();}
 }
 
+const PIG_SVG=`<svg viewBox="0 0 120 80"><g class="bob"><path class="tail" d="M16 34c-10-4-12 6-6 8s2 8-4 6" fill="none" stroke="#e88aa0" stroke-width="4" stroke-linecap="round"/><rect class="lg2" x="30" y="52" width="9" height="22" rx="4" fill="#d9708a"/><rect class="lg4" x="78" y="52" width="9" height="22" rx="4" fill="#d9708a"/><ellipse cx="58" cy="40" rx="42" ry="26" fill="#f4a3b6"/><rect class="lg1" x="40" y="52" width="9" height="22" rx="4" fill="#f4a3b6"/><rect class="lg3" x="88" y="52" width="9" height="22" rx="4" fill="#f4a3b6"/><circle cx="96" cy="32" r="20" fill="#f6b0c0"/><path d="M86 16l-4-12 14 6z" fill="#e88aa0"/><path d="M104 16l6-10 4 14z" fill="#e88aa0"/><ellipse cx="110" cy="38" rx="10" ry="8" fill="#e88aa0"/><circle cx="107" cy="38" r="1.8" fill="#8a3550"/><circle cx="113" cy="38" r="1.8" fill="#8a3550"/><circle cx="98" cy="26" r="2.6" fill="#222"/></g></svg>`;
+function runPig(from,to,ms){
+  const tk=$('trick'),tr=tk.getBoundingClientRect(),fr=from.getBoundingClientRect(),tt=to.getBoundingClientRect();
+  const w=fr.width*1.5,sc=tr.width?1:1;
+  const el=document.createElement('div');el.className='pig';el.innerHTML=PIG_SVG;
+  const fx=fr.left+fr.width/2-tr.left-w/2,fy=fr.top+fr.height/2-tr.top-w*.35;
+  el.style.cssText=`width:${w}px;left:${fx}px;top:${fy}px`;
+  const dx=(tt.left+tt.width/2)-(fr.left+fr.width/2),dy=(tt.top+tt.height/2)-(fr.top+fr.height/2);
+  if(dx<0)el.querySelector('svg').style.transform='scaleX(-1)';
+  tk.appendChild(el);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.opacity='1';el.style.transition=`opacity .25s,translate ${ms}ms ease-in-out`;el.style.translate=`${dx}px ${dy}px`;}));
+  setTimeout(()=>{el.style.opacity='0';},ms-150);
+}
 function resolveTrick(){
   const ls=G.trick[0].card.s;let w=G.trick[0];
   for(const t of G.trick)if(t.card.s===ls&&t.card.r>w.card.r)w=t;
@@ -418,12 +440,14 @@ function resolveTrick(){
     const tgt=sl.find(e=>e.classList.contains('p'+w.p));
     if(tgt){
       const tr=tgt.getBoundingClientRect(),tx=tr.left+tr.width/2,ty=tr.top+tr.height/2;
+      const hasQ=G.trick.some(t=>isQ(t.card)),D=hasQ?1700:600;
+      if(hasQ){const qs=sl.find(e=>e.classList.contains('p'+G.trick.find(t=>isQ(t.card)).p));runPig(qs,tgt,D+150);}
       sl.forEach(e=>{const r=e.getBoundingClientRect();
-        e.style.transition='translate .6s cubic-bezier(.5,0,.8,.4),scale .6s ease-in,opacity .6s ease-in .1s';
+        e.style.transition=`translate ${D}ms cubic-bezier(.5,0,.8,.4) ${hasQ?250:0}ms,scale ${D}ms ease-in ${hasQ?250:0}ms,opacity ${D}ms ease-in ${hasQ?350:100}ms`;
         e.style.translate=`${tx-(r.left+r.width/2)}px ${ty-(r.top+r.height/2)}px`;
         e.style.scale='.55';e.style.opacity='0';});
       G.msg=`${NAMES[w.p]}收牌…`;
-      later(()=>{G.swept='done';resolveTrick();},720);return;
+      later(()=>{G.swept='done';resolveTrick();},D+300+(hasQ?250:0)-(hasQ?0:180));return;
     }
   }
   G.swept=false;
