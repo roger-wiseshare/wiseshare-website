@@ -29,9 +29,12 @@ button:disabled{opacity:.4;cursor:not-allowed}
 #exlist{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:2px}
 .ex{background:var(--tag);border-radius:8px;padding:6px 9px;font-size:14.5px;line-height:1.55}
 .ex b{display:block;font-size:15px}.ex p{margin:2px 0 0}.ex.new{border:2px solid #e8b93a}
+.tn{display:inline-block;min-width:18px;height:18px;line-height:18px;text-align:center;border-radius:9px;background:#2f7de1;color:#fff;font-size:12px;font-weight:700;margin-right:5px}
 .exh{opacity:.8;font-size:14.5px;line-height:1.6}
 #art.learn #artimg,#art.learn .cap{display:none}
 #art.learn #explain{display:flex}
+body:has(#art.learn) .rule{display:none}
+#explain .ex{font-size:13.5px;line-height:1.5}#explain .ex b{font-size:14px}
 #artimg{flex:1;min-height:0;border-radius:10px;overflow:hidden}
 #artimg svg{display:block;width:100%;height:100%}
 .cap{text-align:center;font-size:16px;font-weight:700;opacity:.9}
@@ -196,13 +199,45 @@ function explainMove(b,r,c,p){
   if(Math.abs(r-7)+Math.abs(c-7)<=4)return ['靠近中央布局','保持彈性，爭取更多方向的連線機會。'];
   return ['在棋子附近補點','在雙方棋子附近落子，維持布局彈性。'];
 }
+
+/* 我方（玩家）可下的棋步建議：回傳最多 3 個 [r,c,標題,說明] */
+function suggestFor(b,p){
+  const q=opp(p),list=[];
+  for(const [r,c] of candidates(b)){
+    const a=cellScore(b,r,c,p),d=cellScore(b,r,c,q);
+    list.push({r,c,s:a.score+d.score*0.95+(14-Math.abs(r-7)-Math.abs(c-7))*2+(d.five?90000:0)+(a.five?200000:0)});
+  }
+  list.sort((x,y)=>y.s-x.s);
+  const dbl=x=>x.o4>0||x.c4>=2||(x.c4>=1&&x.o3>=1)||x.o3>=2;
+  const out=[];
+  for(const it of list.slice(0,3)){
+    const me=analyze(b,it.r,it.c,p),op=analyze(b,it.r,it.c,q);let t,e;
+    if(me.five){t='連成五子，取勝';e='下這裡你就能連成五子。';}
+    else if(op.five){t='必須先擋';e='對手已有四子連線，不擋就會輸。';}
+    else if(me.o4){t='製造活四';e='兩端都能成五，對手擋不住。';}
+    else if(me.c4>=2||(me.c4&&me.o3)||me.o3>=2){t='形成雙重威脅';e='四三或雙活三，對手很難同時防守。';}
+    else if(dbl(op)){t='搶佔關鍵點';e='不佔的話，對手下這裡會形成雙重威脅。';}
+    else if(me.c4){t='形成衝四';e='只差一子就五連，逼對手立刻回應。';}
+    else if(me.o3){t='形成活三';e='兩端開放的三連，下一步可變活四。';}
+    else if(op.c4||op.o3){t='封堵對手連線';e='先擋住對手的連線。';}
+    else if(me.o2){t='發展活二';e='連接自己的棋子，為活三打基礎。';}
+    else{t='穩健布局';e='靠近中央與雙方棋子，保持彈性。';}
+    out.push([it.r,it.c,t,e]);
+  }
+  return out;
+}
 const coord=(r,c)=>String.fromCharCode(65+c)+(15-r);
 function renderExplain(){
   const box=$('explain');if(!box||G.level!=='learn')return;
-  const list=[];
-  G.moves.forEach((m,i)=>{if(m.why)list.push({i,m});});
-  const items=list.slice().reverse().map((x,k)=>`<div class="ex${k===0?' new':''}"><b>第 ${x.i+1} 手・${x.m.p==='B'?'黑':'白'} ${coord(x.m.r,x.m.c)}｜${x.m.why[0]}</b><p>${x.m.why[1]}</p></div>`).join('');
-  box.innerHTML='<h3>💡 對手思路解說</h3><div id="exlist">'+(items||'<div class="exh">對手每下一步，這裡就會說明它這一手可能的意圖。</div>')+'</div>';
+  let m=null;for(let i=G.moves.length-1;i>=0;i--)if(G.moves[i].why){m=G.moves[i];break;}
+  let body;
+  if(!m)body='<div class="exh">對手每下一步，這裡就會說明它這一手的意圖，並提示你下一步可以怎麼下。</div>';
+  else{
+    const idx=G.moves.indexOf(m)+1,live=m===G.moves[G.moves.length-1]&&!G.over&&m.tips&&m.tips.length;
+    body=`<div class="ex new"><b>第 ${idx} 手・${m.p==='B'?'黑':'白'} ${coord(m.r,m.c)}｜${m.why[0]}</b><p>${m.why[1]}</p>`+
+      (live?`<b style="margin-top:8px">🎯 你可以這樣下（棋盤上藍圈標示）</b>`+m.tips.map((t,i)=>`<p><span class="tn">${i+1}</span>${coord(t[0],t[1])}｜${t[2]}：${t[3]}</p>`).join(''):'')+'</div>';
+  }
+  box.innerHTML='<h3>💡 對手思路解說</h3><div id="exlist">'+body+'</div>';
 }
 function applyLevelUI(){
   $('art').classList.toggle('learn',G.level==='learn');renderExplain();
@@ -358,7 +393,7 @@ function aiTurn(){
     if(id!==GID)return;
     const [r,c]=aiMove(G.board,G.turn,G.level==='learn'?'normal':G.level);
     const why=explainMove(G.board,r,c,G.turn);
-    place(r,c);G.moves[G.moves.length-1].why=why;G.thinking=false;render();
+    place(r,c);const lm=G.moves[G.moves.length-1];lm.why=why;if(G.level==='learn'&&!G.over)lm.tips=suggestFor(G.board,G.human);G.thinking=false;render();
   },380);
 }
 function undo(){
@@ -430,6 +465,16 @@ function draw(){
   if(G.hover&&!G.over&&G.turn===G.human&&!G.thinking&&G.board[G.hover[0]*N+G.hover[1]]===0)stone(G.hover[0],G.hover[1],G.human,.45);
   const last=G.moves[G.moves.length-1];
   if(last){g.fillStyle='#e03030';g.beginPath();g.arc(m*(last.c+1),m*(last.r+1),m*.11,0,7);g.fill();}
+  if(G.level==='learn'&&last&&last.tips&&!G.over&&G.turn===G.human&&!G.thinking){
+    last.tips.forEach((t,i)=>{
+      const x=m*(t[1]+1),y=m*(t[0]+1);
+      g.save();g.strokeStyle='#2f7de1';g.fillStyle='#2f7de1';g.lineWidth=Math.max(2,m*.08);g.setLineDash([m*.16,m*.1]);
+      g.globalAlpha=i===0?1:.75;g.beginPath();g.arc(x,y,R*.95,0,7);g.stroke();g.setLineDash([]);
+      g.globalAlpha=.18;g.fill();g.globalAlpha=1;
+      g.fillStyle='#1b4f9c';g.font='bold '+Math.round(m*.5)+'px system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(String(i+1),x,y+1);
+      g.restore();
+    });
+  }
   if(G.win){
     g.strokeStyle='#f2c230';g.lineWidth=Math.max(2,m*.1);
     for(const [r,c] of G.win){g.beginPath();g.arc(m*(c+1),m*(r+1),R+m*.03,0,7);g.stroke();}
