@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>灣流 G500 飛行模擬｜台灣四大機場</title>
+<script>window.CESIUM_BASES=["https://cdn.jsdelivr.net/npm/cesium@1.147.0/Build/Cesium/", "https://unpkg.com/cesium@1.147.0/Build/Cesium/", "https://cesium.com/downloads/cesiumjs/releases/1.147/Build/Cesium/"];</script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;color:#e8f0f8;user-select:none;-webkit-user-select:none}
+#cv{position:absolute;inset:0}
+#hud,#map{position:absolute;pointer-events:none}
+#hud{inset:0;width:100%;height:100%}
+#map{right:10px;top:52px;width:150px;height:260px;border:1px solid rgba(140,255,160,.45);border-radius:6px;background:rgba(5,15,25,.55)}
+#credit{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);font-size:10px;opacity:.85;max-width:60vw;text-align:center;z-index:4}
+#credit .cesium-credit-logoContainer{display:inline}
+.cesium-viewer-bottom,.cesium-widget-credits{display:none!important}
+#credit .cesium-credit-textContainer *,#credit a{color:#cfe!important;font-size:10px}
+.ov{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;background:rgba(3,10,18,.88);z-index:10;overflow:auto;padding:12px}
+.ov.hide{display:none}
+.card{margin:auto;width:min(760px,100%);background:#0f1b29;border:1px solid #284058;border-radius:14px;padding:20px 22px;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+h1{margin:0 0 4px;font-size:22px}
+.sub{color:#8fb0cc;font-size:13px;margin-bottom:14px;line-height:1.55}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:600px){.row{grid-template-columns:1fr}}
+label{display:block;font-size:12px;color:#8fb0cc;margin-bottom:4px}
+select,input[type=text],input[type=password]{width:100%;padding:9px 10px;border-radius:8px;border:1px solid #2c4660;background:#0a1420;color:#e8f0f8;font-size:15px}
+.box{border:1px solid #223850;border-radius:10px;padding:10px 12px;background:#0b1623}
+.btn{display:inline-block;padding:11px 20px;border-radius:10px;border:0;background:#2f8cff;color:#fff;font-size:16px;font-weight:600;cursor:pointer}
+.btn.sec{background:#26384c}
+.btn:active{transform:scale(.98)}
+.info{font-size:13px;color:#b7d0e6;line-height:1.7}
+.keys{font-size:12px;color:#9fbad0;line-height:1.75;columns:2;column-gap:20px}
+.keys b{color:#fff;background:#223a52;border-radius:4px;padding:0 5px;font-weight:600}
+@media(max-width:600px){.keys{columns:1}}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px;color:#cfe0ee;margin:4px 0}
+.chk input{width:18px;height:18px}
+.note{font-size:12px;color:#e0b060;line-height:1.6;margin-top:8px}
+#banner{position:absolute;left:50%;top:18%;transform:translateX(-50%);font-size:28px;font-weight:800;letter-spacing:2px;text-shadow:0 2px 8px #000;z-index:6;pointer-events:none;text-align:center;display:none}
+#toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);background:rgba(10,25,40,.8);border:1px solid #38566f;border-radius:8px;padding:6px 14px;font-size:14px;z-index:6;pointer-events:none;display:none}
+#touch{position:absolute;inset:0;z-index:5;display:none;pointer-events:none}
+#touch .pad{position:absolute;left:18px;bottom:70px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);pointer-events:auto;touch-action:none}
+#touch .knob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px;border-radius:50%;background:rgba(255,255,255,.35)}
+#touch .thr{position:absolute;right:18px;bottom:70px;width:56px;height:170px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);pointer-events:auto;touch-action:none}
+#touch .thr i{position:absolute;left:0;right:0;bottom:0;background:rgba(80,200,120,.55);border-radius:12px}
+#touch .bt{position:absolute;right:90px;bottom:70px;width:180px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;pointer-events:auto}
+#touch .bt button{padding:9px 0;border-radius:8px;border:1px solid rgba(255,255,255,.3);background:rgba(20,40,60,.7);color:#fff;font-size:13px}
+#pausebtn{position:absolute;right:10px;top:10px;z-index:7;padding:6px 12px;border-radius:8px;border:1px solid #38566f;background:rgba(10,25,40,.7);color:#cfe;font-size:13px;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="cv"></div>
+<canvas id="hud"></canvas>
+<canvas id="map" width="150" height="260"></canvas>
+<div id="credit"></div>
+<div id="banner"></div>
+<div id="toast"></div>
+<button id="pausebtn" style="display:none">選單 (Esc)</button>
+<div id="touch">
+  <div class="pad" id="tpad"><div class="knob" id="tknob"></div></div>
+  <div class="thr" id="tthr"><i id="tthri"></i></div>
+  <div class="bt" id="tbt">
+    <button data-k="g">起落架</button><button data-k="f">襟翼＋</button><button data-k="r">襟翼－</button>
+    <button data-k="b">煞車</button><button data-k="x">減速板</button><button data-k="c">視角</button>
+    <button data-k="a">自動駕駛</button><button data-k="n">導航</button><button data-k="l">自動降落</button>
+  </div>
+</div>
+
+<div class="ov" id="menu">
+  <div class="card">
+    <h1>✈ 灣流 G500 飛行模擬</h1>
+    <div class="sub">以 Google 照片級 3D 地圖（Photorealistic 3D Tiles）呈現真實地形與市區，從 A 機場起飛、到 B 機場降落。飛機為灣流 G500（雙發、最大起飛重量 36,106 公斤），飛行模型為簡化版，僅供娛樂與練習。</div>
+    <div class="row">
+      <div class="box"><label>A 地：起飛機場</label>
+        <select id="depA"></select>
+        <div style="height:6px"></div><label>起飛跑道</label><select id="depR"></select></div>
+      <div class="box"><label>B 地：降落機場</label>
+        <select id="dstA"></select>
+        <div style="height:6px"></div><label>降落跑道</label><select id="dstR"></select></div>
+    </div>
+    <div class="info" id="route"></div>
+    <div class="row">
+      <div class="box"><label>Google Maps Platform API 金鑰（需啟用 Map Tiles API）</label>
+        <input type="password" id="gkey" placeholder="AIza…（留空則使用簡易地球）" autocomplete="off">
+        <div class="note">金鑰只存在你這台瀏覽器的 localStorage，不會上傳到任何伺服器。建議在 Google Cloud 把金鑰限制為「HTTP 參照位址」＝本網站網域，並設定預算上限。</div></div>
+      <div class="box">
+        <label>畫質</label>
+        <select id="qual"><option value="24">流暢（較省流量）</option><option value="16" selected>標準</option><option value="8">高畫質（耗流量與記憶體）</option></select>
+        <div style="height:8px"></div>
+        <label class="chk"><input type="checkbox" id="assist" checked>穩定輔助（放開操縱桿後維持飛行路徑與水平）</label>
+        <label class="chk"><input type="checkbox" id="sprot" checked>失速保護</label>
+        <label class="chk"><input type="checkbox" id="invp">俯仰反向（↑ 抬頭）</label>
+        <label class="chk"><input type="checkbox" id="safechk">相容模式（畫面全黑或出錯時勾選，會重新載入頁面）</label>
+      </div>
+    </div>
+    <div class="keys">
+      <div><b>↑</b><b>↓</b> 俯仰（↑ 壓機頭、↓ 拉機頭，同一般模擬器）　<b>←</b><b>→</b> 滾轉</div>
+      <div><b>Q</b><b>E</b> 方向舵／前輪轉向　<b>W</b><b>S</b> 加／減油門　<b>Z</b> 反推力（按住）</div>
+      <div><b>F</b> 放襟翼　<b>R</b> 收襟翼　<b>G</b> 起落架　<b>X</b> 減速板　<b>空白鍵</b> 煞車（按住）</div>
+      <div><b>C</b> 切換視角　<b>M</b> 小地圖　<b>H</b> HUD　<b>P</b> 暫停　<b>[</b><b>]</b> 時間加速</div>
+      <div><b>A</b> 自動駕駛（維持航向／高度）　<b>T</b> 自動油門　<b>,</b><b>.</b> 航向 ∓5°</div>
+      <div><b>PgUp</b><b>PgDn</b> 目標高度 ±1,000 呎　<b>Home</b><b>End</b> 目標速度 ±10 節</div>
+      <div><b>N</b> 導航至 B 機場　<b>L</b> 全自動進場＋降落　<b>Esc</b> 選單</div>
+      <div>手把：左搖桿＝俯仰／滾轉，LT／RT＝油門，A＝起落架，B＝煞車</div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn" id="go">開始飛行</button>
+      <button class="btn sec" id="resume" style="display:none">回到飛行</button>
+      <span class="info" id="gstat"></span>
+    </div>
+    <div class="note">跑道座標與高度取自公開航空資料，僅供模擬，絕非飛航用途；台中清泉崗機場為軍民合用。Google 3D 地圖的地面高度含建物與樹木，起降過程若遇到異常彈跳屬正常。</div>
+  </div>
+</div>
+
+<div class="ov hide" id="load"><div class="card" style="text-align:center"><h1 id="loadt">載入地圖中…</h1><div class="sub" id="loadd">正在向 Google 要求 3D 圖磚，請稍候。</div></div></div>
+
+<div class="ov hide" id="result"><div class="card">
+  <h1 id="rtitle"></h1><div class="info" id="rbody"></div>
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="again">再飛一次</button><button class="btn sec" id="tomenu">回選單</button></div>
+</div></div>
+
+<script>
+/* ===== 灣流 G500 簡化飛行模型（純邏輯，可在 Node 測試）===== */
+const FS = (() => {
+  const D2R = Math.PI / 180, R2D = 180 / Math.PI, KT = 0.514444, FT = 0.3048, G0 = 9.80665, RHO0 = 1.225;
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const wrap180 = a => { a %= 360; if (a > 180) a -= 360; if (a < -180) a += 360; return a; };
+  const wrap360 = a => ((a % 360) + 360) % 360;
+
+  /* ---- 標準大氣 ---- */
+  function atmos(hm) {
+    hm = Math.max(-500, hm);
+    let T, p;
+    if (hm < 11000) { T = 288.15 - 0.0065 * hm; p = 101325 * Math.pow(T / 288.15, 5.25588); }
+    else { T = 216.65; p = 22632.1 * Math.exp(-(hm - 11000) / 6341.62); }
+    return { T, p, rho: p / (287.058 * T), a: Math.sqrt(1.4 * 287.058 * T) };
+  }
+
+  /* ---- 大地測量輔助（局部平面近似，距離短時誤差可忽略）---- */
+  const A_E = 6378137, E2 = 0.00669437999014;
+  function radii(latDeg) {
+    const s = Math.sin(latDeg * D2R), w = Math.sqrt(1 - E2 * s * s);
+    return { Rn: A_E / w, Rm: A_E * (1 - E2) / (w * w * w) };
+  }
+  function enu(lat0, lon0, lat, lon) { // 以 (lat0,lon0) 為原點，回傳 [東, 北] 公尺
+    const r = radii(lat0);
+    return [(lon - lon0) * D2R * r.Rn * Math.cos(lat0 * D2R), (lat - lat0) * D2R * r.Rm];
+  }
+  function dest(lat0, lon0, brgDeg, dist) {
+    const r = radii(lat0), b = brgDeg * D2R;
+    return [lat0 + dist * Math.cos(b) / r.Rm * R2D, lon0 + dist * Math.sin(b) / (r.Rn * Math.cos(lat0 * D2R)) * R2D];
+  }
+  function bearing(lat1, lon1, lat2, lon2) {
+    const p1 = lat1 * D2R, p2 = lat2 * D2R, dl = (lon2 - lon1) * D2R;
+    return wrap360(Math.atan2(Math.sin(dl) * Math.cos(p2), Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl)) * R2D);
+  }
+  function distance(lat1, lon1, lat2, lon2) {
+    const p1 = lat1 * D2R, p2 = lat2 * D2R, dp = p2 - p1, dl = (lon2 - lon1) * D2R;
+    const a = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
+    return 2 * 6371008.8 * Math.asin(Math.sqrt(a));
+  }
+
+  /* ---- 灣流 G500 參數（取自官方規格，其餘為合理估計）---- */
+  const AC = {
+    S: 105, // 機翼面積 m²（估計）
+    Tmax: 2 * 67360, // 每具 67.36 kN（15,144 lbf），共兩具
+    mEmpty: 24000, // 空機＋機組＋酬載（估計）kg
+    fuelCap: 13100, // 最大燃油 kg（約 30,250 lb）
+    MTOW: 36106, MLW: 29189, // 官方最大起飛／著陸重量 kg
+    Vmo: 340, Mmo: 0.925,
+    flapDeg: [0, 10, 20, 39],
+    CL0: [0.10, 0.27, 0.43, 0.58],
+    CLmax: [1.05, 1.30, 1.50, 1.70],
+    CD0: [0.0195, 0.029, 0.041, 0.064],
+    CLa: 4.8, K: 0.046,
+    gearCD: 0.016, spoilCD: 0.040,
+    cgGear: 2.25, cgBelly: 1.20, // 重心離地高度（m）
+    wheelbase: 11
+  };
+  const interpFlap = (arr, deg) => {
+    const f = AC.flapDeg;
+    if (deg <= 0) return arr[0];
+    for (let i = 1; i < f.length; i++) if (deg <= f[i]) return arr[i - 1] + (arr[i] - arr[i - 1]) * (deg - f[i - 1]) / (f[i] - f[i - 1]);
+    return arr[arr.length - 1];
+  };
+
+  function lapse(rho, M) { // 推力隨高度與馬赫數衰減
+    const d = Math.pow(rho / RHO0, 0.80);
+    return d * clamp(1 - 0.50 * M + 0.15 * M * M, 0.2, 1);
+  }
+
+  /* ---- 初始狀態 ---- */
+  function newState() {
+    return {
+      lat: 0, lon: 0, h: 0, N: 20, // h：橢球高(HAE)；N：大地水準面差，MSL = h - N
+      V: 0, gam: 0, chi: 0, psi: 0, theta: 0, phi: 0, q: 0, p: 0,
+      thr: 0, flapDeg: 0, gear: 1, spoil: 0, rev: 0, brake: 0,
+      fuel: 5000, onGround: true, gndH: 0, time: 0,
+      gamRef: 0, alpha: 0, stalled: false,
+      dead: false, deadReason: '', touchdown: null, events: [],
+      ap: { on: false, lat: 'HDG', vert: 'ALT', at: false, hdg: 0, alt: 3000 * FT, spd: 210, vs: 0, navLat: 0, navLon: 0, rwy: null, land: false, status: '' }
+    };
+  }
+
+  function mass(S) { return AC.mEmpty + S.fuel; }
+  function vsStall(S, flapDeg, rho) { // 1g 失速速度（TAS m/s）
+    const cl = interpFlap(AC.CLmax, flapDeg);
+    return Math.sqrt(2 * mass(S) * G0 / (rho * AC.S * cl));
+  }
+  function vref(S) { // 全襟翼進場參考速度（KIAS）
+    const cl = AC.CLmax[3];
+    return 1.30 * Math.sqrt(2 * mass(S) * G0 / (RHO0 * AC.S * cl)) / KT * 0.93;
+  }
+
+  /* ---- 一步積分 ---- */
+  function step(S, c, env, dt) {
+    if (S.dead) return;
+    S.time += dt;
+    const g = S.gear, onG = S.onGround;
+    // 致動器
+    let thrCmd = c.rev ? 0.0 : c.thrCmd;
+    S.rev += clamp((c.rev && onG ? 1 : 0) - S.rev, -dt * 1.2, dt * 1.2);
+    S.gear += clamp((c.gearCmd ? 1 : 0) - S.gear, -dt / 7, dt / 7);
+    const flTarget = AC.flapDeg[c.flapsIdx | 0];
+    S.flapDeg += clamp(flTarget - S.flapDeg, -dt * 2.0, dt * 2.0);
+    S.spoil += clamp((c.spoilCmd ? 1 : 0) - S.spoil, -dt * 1.5, dt * 1.5);
+    S.brake += clamp(c.brake - S.brake, -dt * 3, dt * 3);
+
+    const hm = S.h - S.N, at = atmos(hm), rho = at.rho, M = S.V / at.a;
+    const q = 0.5 * rho * S.V * S.V, eas = S.V * Math.sqrt(rho / RHO0);
+    const m = mass(S), W = m * G0;
+    const cl0 = interpFlap(AC.CL0, S.flapDeg), clmax = interpFlap(AC.CLmax, S.flapDeg), cd0f = interpFlap(AC.CD0, S.flapDeg);
+    const alStall = (clmax - cl0) / AC.CLa;
+
+    // ---- 自動駕駛／輔助 → 目標 ----
+    let cmd = { roll: c.roll, pitch: c.pitch, yaw: c.yaw, thrCmd: null, thetaTarget: null, bankTarget: null, brakeAuto: 0, revAuto: 0 };
+    if (S.ap.on) apLaw(S, c, env, cmd, { rho, M, eas, q, W, m, cl0, alStall, at });
+
+    if (cmd.thrCmd != null) thrCmd = cmd.thrCmd;
+    { const spool = thrCmd > S.thr ? 0.45 : 0.6; S.thr += clamp(thrCmd - S.thr, -dt * spool, dt * spool); }
+    if (cmd.revAuto && S.onGround) S.rev += clamp(1 - S.rev, 0, dt * 1.2);
+    const alBal = clamp((W * Math.cos(S.gam) / Math.max(q * AC.S, 50) - cl0) / AC.CLa, -0.05, alStall * 0.9);
+
+    // ---- 俯仰 ----
+    const pitchAuth = clamp((eas - 35) / 50, 0, 1) * (onG ? 1 : 1);
+    let qCmd;
+    const qmax = (4.2 - 1.8 * clamp((eas / KT - 140) / 200, 0, 1)) * D2R; // 低速約 4°/s，高速約 2.4°/s
+    if (cmd.thetaTarget != null) {
+      qCmd = clamp((cmd.thetaTarget - S.theta) * 0.9, -qmax, qmax);
+    } else if (Math.abs(cmd.pitch) > 0.02) {
+      qCmd = cmd.pitch * qmax * (onG ? pitchAuth : 1);
+      S.gamRef = S.gam; // 飛行路徑參考（放開操縱桿後維持）
+    } else if (c.assist && !onG) {
+      const thTgt = S.gamRef + alBal;
+      qCmd = clamp((thTgt - S.theta) * 0.7, -qmax, qmax);
+      S.gamRef += clamp(S.gam - S.gamRef, -0.01 * dt, 0.01 * dt) * 0; // 保持
+    } else qCmd = 0;
+    S.q += (qCmd - S.q) * clamp(dt / 0.35, 0, 1);
+    S.theta += S.q * dt;
+    S.alpha = S.theta - S.gam;
+    // 失速保護（可關閉）
+    if (c.stallProt) {
+      const lim = alStall * 0.88;
+      if (S.alpha > lim && !onG) { S.theta = S.gam + lim; if (S.q > 0) S.q = 0; }
+    }
+    if (onG) { // 地面俯仰：機頭輪著地、尾部擦地上限
+      if (Math.abs(cmd.pitch) <= 0.02 && cmd.thetaTarget == null) S.theta += (0 - S.theta) * clamp(dt * 1.5, 0, 1);
+      S.theta = clamp(S.theta, 0, 12 * D2R);
+    } else S.theta = clamp(S.theta, -40 * D2R, 40 * D2R);
+    S.alpha = S.theta - S.gam;
+
+    // ---- 滾轉 ----
+    if (!onG) {
+      const pmax = (24 - 8 * clamp((eas / KT - 150) / 200, 0, 1)) * D2R;
+      let pCmd;
+      if (cmd.bankTarget != null) pCmd = clamp((cmd.bankTarget - S.phi) * 0.8, -pmax * 0.6, pmax * 0.6);
+      else if (Math.abs(cmd.roll) > 0.02) pCmd = cmd.roll * pmax;
+      else if (c.assist && Math.abs(S.phi) < 32 * D2R) pCmd = clamp(-S.phi * 0.35, -5 * D2R, 5 * D2R);
+      else pCmd = 0;
+      S.p += (pCmd - S.p) * clamp(dt / 0.3, 0, 1);
+      S.phi += S.p * dt;
+      const lim = (c.assist ? 66 : 120) * D2R;
+      S.phi = clamp(S.phi, -lim, lim);
+    } else { S.phi += (0 - S.phi) * clamp(dt * 4, 0, 1); S.p = 0; }
+
+    // ---- 氣動力 ----
+    const alEff = clamp(S.alpha, -0.30, 0.45);
+    let CL;
+    if (alEff <= alStall) CL = cl0 + AC.CLa * Math.max(alEff, -0.22);
+    else { CL = clmax * (1 - 0.65 * clamp((alEff - alStall) / 0.10, 0, 1)); }
+    S.stalled = alEff > alStall * 1.02 && !onG;
+    const spoil = S.spoil;
+    CL *= 1 - (onG ? 0.55 : 0.20) * spoil;
+    const mach = M;
+    const cdw = mach > 0.86 ? 12 * Math.pow(mach - 0.86, 2) + (mach > 0.91 ? 40 * Math.pow(mach - 0.91, 2) : 0) : 0;
+    const CD = cd0f + AC.gearCD * S.gear + AC.spoilCD * spoil + AC.K * CL * CL + cdw + (S.stalled ? 0.12 : 0);
+    const L = q * AC.S * CL, D = q * AC.S * CD;
+    let T = 0;
+    if (S.fuel > 0) {
+      T = S.thr * AC.Tmax * lapse(rho, M);
+      if (S.rev > 0.05 && onG) T = -S.rev * 0.38 * AC.Tmax * Math.pow(rho / RHO0, 0.5) * clamp((S.V - 12) / 25, 0, 1);
+    }
+    // 燃油（TSFC 約 0.62 lb/lbf/h）
+    if (S.fuel > 0) S.fuel = Math.max(0, S.fuel - Math.max(T, 0) * 1.75e-5 * dt - 0.02 * dt * 0);
+
+    // ---- 運動方程 ----
+    const ca = Math.cos(S.alpha), sa = Math.sin(S.alpha);
+    let Vdot, gamDot = 0, chiDot = 0;
+    const Fz = L * Math.cos(S.phi) + T * sa - W * Math.cos(S.gam);
+    if (onG) {
+      const N = Math.max(0, W - L * Math.cos(S.phi));
+      const onRwy = env.onRunway ? env.onRunway(S.lat, S.lon) : true;
+      const mu = (onRwy ? 0.018 : 0.14) + (onRwy ? 0.42 : 0.30) * clamp(Math.max(S.brake, cmd.brakeAuto), 0, 1) * (S.gear > 0.9 ? 1 : 0) + (S.gear < 0.9 ? 0.45 : 0);
+      const fr = mu * N * Math.sign(S.V || 1);
+      Vdot = (T * ca - D - fr) / m;
+      if (S.V + Vdot * dt < 0) { Vdot = -S.V / dt; if (T < 0) Vdot = 0; }
+      if (Fz > 0 && S.theta > 1 * D2R) gamDot = Fz / (m * Math.max(S.V, 20));
+      // 前輪轉向
+      const steer = clamp(cmd.yaw, -1, 1) * (45 * D2R) * clamp(1 - S.V / 55, 0.07, 1);
+      chiDot = S.V * Math.tan(steer) / AC.wheelbase;
+      if (cmd.yaw === 0) chiDot = 0;
+    } else {
+      Vdot = (T * ca - D - W * Math.sin(S.gam)) / m;
+      gamDot = Fz / (m * Math.max(S.V, 25));
+      chiDot = (L * Math.sin(S.phi)) / (m * Math.max(S.V, 25) * Math.max(Math.cos(S.gam), 0.2));
+    }
+    S.V = Math.max(0, S.V + Vdot * dt);
+    S.gam += gamDot * dt;
+    S.gam = clamp(S.gam, -1.2, 1.2);
+    S.chi = wrap360((S.chi + chiDot * dt * R2D)) ;
+    S.psi = S.chi;
+    // 空中偏航：方向舵造成機頭與航跡微小差異（僅視覺）
+    S.beta = onG ? 0 : clamp(cmd.yaw, -1, 1) * 4 * D2R;
+
+    // ---- 位置更新 ----
+    const hv = S.V * Math.cos(S.gam);
+    const rr = radii(S.lat);
+    const chiR = S.chi * D2R;
+    S.lat += hv * Math.cos(chiR) * dt / (rr.Rm + S.h) * R2D;
+    S.lon += hv * Math.sin(chiR) * dt / ((rr.Rn + S.h) * Math.cos(S.lat * D2R)) * R2D;
+    const vz = S.V * Math.sin(S.gam);
+    S.h += vz * dt;
+    S.vz = vz;
+
+    // ---- 地面接觸 ----
+    const gnd = env.ground(S.lat, S.lon);
+    S.gndH = gnd;
+    const cg = S.gear > 0.85 ? AC.cgGear : AC.cgBelly;
+    const contact = gnd + cg;
+    if (S.h <= contact) {
+      if (!S.onGround) {
+        const vsFpm = -vz / FT * 60;
+        const info = { t: S.time, vsFpm, ias: eas / KT, pitch: S.theta * R2D, bank: S.phi * R2D, gearDown: S.gear > 0.85, lat: S.lat, lon: S.lon, hdg: S.chi, gs: S.V / KT };
+        S.touchdown = info; S.events.push({ type: 'touchdown', info });
+        if (S.gear <= 0.85) S.events.push({ type: 'crash', reason: '起落架未放下就接地' });
+        else if (vsFpm > 1500) S.events.push({ type: 'crash', reason: `垂直下降率過大（${Math.round(vsFpm)} fpm）` });
+        else if (Math.abs(S.phi) > 18 * D2R) S.events.push({ type: 'crash', reason: '接地時坡度過大，翼尖觸地' });
+        else if (env.onRunway && !env.onRunway(S.lat, S.lon) && S.V > 45) S.events.push({ type: 'crash', reason: '在跑道外高速接地' });
+        S.chi = S.chi; S.gam = 0;
+        if (S.gear > 0.85 && S.theta > 10 * D2R) S.events.push({ type: 'warn', msg: '機尾擦地' });
+      } else { S.gam = Math.min(S.gam, 0) * 0; }
+      S.h = contact; S.onGround = true;
+      if (S.gam < 0) S.gam = 0;
+    } else if (S.onGround && (S.h > contact + 0.02 || S.gam > 0.002)) {
+      S.onGround = false; S.events.push({ type: 'liftoff' });
+    } else if (S.onGround) { S.h = contact; }
+    if (!S.onGround && S.h < contact - 0.5) { S.h = contact; }
+    if (S.fuel <= 0 && !S.fuelOut) { S.fuelOut = true; S.events.push({ type: 'warn', msg: '燃油耗盡，引擎熄火' }); }
+  }
+
+  /* ---- 自動駕駛律 ---- */
+  function apLaw(S, c, env, cmd, E) {
+    const ap = S.ap, V = S.V, hm = S.h - S.N, ias = E.eas / KT;
+    const rw = ap.rwy; // {thrLat,thrLon,hdg,elevM,len}
+    // 橫向
+    let hdgTgt = ap.hdg;
+    let loc = null;
+    if (ap.lat === 'NAV') hdgTgt = bearing(S.lat, S.lon, ap.navLat, ap.navLon);
+    if (ap.lat === 'LOC' && rw) {
+      const [e, n] = enu(rw.thrLat, rw.thrLon, S.lat, S.lon);
+      const h = rw.hdg * D2R;
+      const along = e * Math.sin(h) + n * Math.cos(h); // 沿跑道（前方為正）
+      const xtk = e * Math.cos(h) - n * Math.sin(h); // 右側為正
+      loc = { along, xtk };
+      const dist = -along;
+      const k = clamp(0.5 + 0.00004 * Math.abs(dist), 0.5, 1.3);
+      const adj = clamp(xtk * 0.018 * k * (dist > 0 ? 1 : 0.5), -30, 30);
+      hdgTgt = rw.hdg - adj;
+      if (E.q > 0 && !S.onGround && dist > 0 && dist < 1200 && false) hdgTgt = rw.hdg;
+    }
+    if (S.onGround) {
+      if (ap.land && rw) { // 滾行：以方向舵保持中心線
+        const [e, n] = enu(rw.thrLat, rw.thrLon, S.lat, S.lon);
+        const h = rw.hdg * D2R, xtk = e * Math.cos(h) - n * Math.sin(h);
+        const err = wrap180(rw.hdg - xtk * 0.4 - S.psi * R2D);
+        cmd.yaw = clamp(err * 0.08, -1, 1) * 1.0;
+        cmd.brakeAuto = V > 20 ? 0.55 : 0.8; cmd.revAuto = V > 30 ? 1 : 0;
+        cmd.thrCmd = 0.0; cmd.thetaTarget = 0; cmd.bankTarget = 0;
+        if (V < 2) { ap.on = false; ap.status = '滾行完成'; }
+        return;
+      }
+    }
+    let err = wrap180(hdgTgt - S.chi);
+    cmd.bankTarget = clamp(err * 1.6, -25, 25) * D2R;
+    if (ap.lat === 'LOC' && loc && loc.along > -400) cmd.bankTarget = clamp(wrap180((rw.hdg) - S.chi) * 1.2, -10, 10) * D2R;
+
+    // 垂直
+    let vsCmd = 0, thrCmd = null, vmode = ap.vert;
+    const altMsl = hm;
+    let gsDev = null;
+    if (ap.vert === 'GS' && rw && loc) {
+      const dist = -loc.along;
+      const tch = 15;
+      const rwH = rw.elevHAE != null ? rw.elevHAE : rw.elevM + S.N; // 跑道面橢球高
+      const gsAlt = rwH + tch + Math.tan(3 * D2R) * Math.max(dist, 0);
+      gsDev = gsAlt - S.h; // 正：在下滑道之下
+      const agl = S.h - rwH;
+      if (ap.land && agl < 16 && dist < 1500) { // 拉平
+        vsCmd = -(0.30 + 0.115 * Math.max(agl - 1, 0));
+        thrCmd = 0.0; ap.status = 'FLARE';
+      } else {
+        if (!ap.gsCap && gsDev <= 25) ap.gsCap = true; // 由下方攔截下滑道
+        if (ap.gsCap) { vsCmd = -V * Math.tan(3 * D2R) + clamp(gsDev * 0.07, -4, 4); ap.status = ap.status === 'FLARE' ? ap.status : 'G/S'; }
+        else { vsCmd = clamp((ap.alt - altMsl) * 0.14, -6, 6); vmode = 'ALT'; ap.status = 'G/S 待機'; }
+      }
+    } else if (ap.vert === 'VS') {
+      vsCmd = ap.vs * FT / 60;
+    } else {
+      const e = ap.alt - altMsl;
+      vsCmd = clamp(e * 0.14, -14, 14);
+      if (Math.abs(e) > 250) vmode = e > 0 ? 'CLB' : 'DES';
+    }
+    // 速度（自動油門）
+    let spdTgt = ap.spd;
+    if (rw && (ap.lat === 'LOC') && ap.vert === 'GS') {
+      const dist = loc ? -loc.along : 9999;
+      spdTgt = dist < 12000 ? Math.min(ap.spd, vref(S) + 8 - clamp((12000 - dist) / 12000, 0, 1) * 0 ) : ap.spd;
+      if (ap.land && dist < 900) spdTgt = vref(S) + 3;
+    }
+    if (ap.at) {
+      if (thrCmd == null) {
+        if (vmode === 'CLB') { thrCmd = 0.96; }
+        else if (vmode === 'DES') { thrCmd = 0.12; }
+        else {
+          const errV = spdTgt - ias;
+          ap._ti = clamp((ap._ti || 0.5) + errV * 0.0008, 0.05, 1);
+          thrCmd = clamp(ap._ti + errV * 0.03, 0.04, 1);
+        }
+      }
+      cmd.thrCmd = thrCmd;
+    }
+    // 俯仰目標
+    let gamCmd;
+    if (vmode === 'CLB' || vmode === 'DES') {
+      gamCmd = clamp((ias - spdTgt) * KT * 0.012, -0.12, 0.14); // 以俯仰控制速度（FLCH）
+    } else gamCmd = Math.asin(clamp(vsCmd / Math.max(V, 40), -0.25, 0.25));
+    const alBal = clamp((E.W * Math.cos(S.gam) / Math.max(E.q * AC.S, 50) - E.cl0) / AC.CLa, -0.05, E.alStall * 0.9);
+    cmd.thetaTarget = gamCmd + alBal;
+    if (vmode === 'CLB') cmd.thetaTarget = clamp(gamCmd, -0.05, 0.14) + alBal;
+    S.ap.gsDev = gsDev; S.ap.loc = loc; S.ap.vmode = vmode;
+    // 自動降落：接地後切換為滾行
+    if (!S.onGround && ap.land && ap.vert === 'GS' && gsDev != null && S.h - S.gndH < 2.6 + 0.1) { /* 由著地事件處理 */ }
+  }
+
+
+  /* ---- 全程自動：爬升→巡航→下降→進場→自動降落 ---- */
+  function fafPoint(rw, distM) { return dest(rw.thrLat, rw.thrLon, wrap360(rw.hdg + 180), distM); }
+  function autoSpeed(S, hm, ias) {
+    const at = atmos(hm);
+    const machTgt = 0.80, eas = machTgt * at.a * Math.sqrt(at.rho / RHO0) / KT;
+    const hft = hm / FT;
+    let spd = hft < 10000 ? 250 : 300;
+    spd = Math.min(spd, eas);
+    return spd;
+  }
+  function apManage(S, mission, dt) {
+    const ap = S.ap, rw = mission.rwy; if (!ap.on || !ap.auto) return;
+    const hm = S.h - S.N, [fl, fo] = fafPoint(rw, 20000);
+    const dThr = distance(S.lat, S.lon, rw.thrLat, rw.thrLon);
+    const dFaf = distance(S.lat, S.lon, fl, fo);
+    const ias = S.V * Math.sqrt(atmos(hm).rho / RHO0) / KT;
+    const cruise = mission.cruiseAlt;
+    ap.navLat = fl; ap.navLon = fo; ap.rwy = rw; ap.at = true;
+    const todDist = Math.max(0, hm - 1000) / Math.tan(2.9 * D2R) + 9000;
+    if (!ap.stage) ap.stage = 'CLIMB';
+    if (ap.stage !== 'APPR' && ap.stage !== 'LAND') {
+      if (ap.lat !== 'LOC') ap.lat = 'NAV';
+      ap.vert = 'ALT';
+      if (dThr < todDist && hm > 1400 && ap.stage !== 'DESC') ap.stage = 'DESC';
+      ap.alt = ap.stage === 'DESC' ? 3000 * FT : cruise;
+      ap.spd = autoSpeed(S, hm, ias);
+      if (ap.stage === 'DESC' && hm < 3300 * FT) ap.spd = Math.min(ap.spd, 210);
+      // 近 FAF：切換為航向道攔截
+      const [e, n] = enu(rw.thrLat, rw.thrLon, S.lat, S.lon), h = rw.hdg * D2R;
+      const along = e * Math.sin(h) + n * Math.cos(h), xtk = e * Math.cos(h) - n * Math.sin(h);
+      if (dThr < 26000 && along < -4000 && Math.abs(xtk) < 9000) {
+        const ang = Math.abs(wrap180(S.chi - rw.hdg));
+        const turnLead = 2600 * Math.sin(ang * D2R) + 1500;
+        if (dFaf < turnLead || (Math.abs(xtk) < 1800 && ang < 60)) { ap.lat = 'LOC'; }
+      }
+      if (ap.lat === 'LOC' && dThr < 26000) { ap.vert = 'GS'; ap.stage = 'APPR'; }
+    } else {
+      ap.lat = 'LOC'; ap.vert = 'GS'; ap.alt = 3000 * FT;
+      ap.spd = Math.min(210, Math.max(ap.spd, 160));
+      if (dThr < 12000) ap.spd = Math.min(ap.spd, vref(S) + 10);
+      ap.land = true;
+    }
+    // 進場自動配置
+    ap.cfg = { flaps: 0, gear: false };
+    if (ap.stage === 'APPR') {
+      if (dThr < 22000 && ias < 215) ap.cfg.flaps = 1;
+      if (dThr < 16000 && ias < 185) ap.cfg.flaps = 2;
+      if (dThr < 13500) ap.cfg.gear = true;
+      if (dThr < 9500 && ias < 175) ap.cfg.flaps = 3;
+      if (ap.cfg.gear && dThr > 13500) ap.cfg.gear = true;
+    }
+  }
+
+  return { fafPoint, apManage, autoSpeed, D2R, R2D, KT, FT, G0, RHO0, clamp, wrap180, wrap360, atmos, radii, enu, dest, bearing, distance, AC, newState, step, mass, vref, vsStall, interpFlap, lapse };
+})();
+
+
+</script>
+<script>
+/* 機場與跑道資料：門檻座標取自公開航空資料（OurAirports／AIP 彙整），僅供模擬，非飛航用途 */
+const AIRPORTS = (() => {
+  const FSx = FS;
+  function pair(a, b) { // a,b: {id,lat,lon,disp}  → 兩條對向跑道
+    const hA = FSx.bearing(a.lat, a.lon, b.lat, b.lon), hB = FSx.wrap360(hA + 180);
+    const d = FSx.distance(a.lat, a.lon, b.lat, b.lon);
+    return [
+      { id: a.id, thrLat: a.lat, thrLon: a.lon, hdg: hA, len: d + b.disp, disp: a.disp, w: a.w },
+      { id: b.id, thrLat: b.lat, thrLon: b.lon, hdg: hB, len: d + a.disp, disp: b.disp, w: a.w }
+    ];
+  }
+  const P = (id, lat, lon, disp, w) => ({ id, lat, lon, disp: disp || 0, w: w || 60 });
+  return {
+    RCSS: { code: 'RCSS', iata: 'TSA', name: '台北松山機場', elevM: 5, lat: 25.0697, lon: 121.5525,
+      runways: pair(P('10', 25.07005, 121.539622), P('28', 25.069136, 121.565425)) },
+    RCTP: { code: 'RCTP', iata: 'TPE', name: '桃園國際機場', elevM: 33, lat: 25.0777, lon: 121.2330,
+      runways: [].concat(pair(P('05L', 25.0729, 121.2160), P('23R', 25.0945, 121.2434)),
+                         pair(P('05R', 25.061431, 121.224247, 106), P('23L', 25.081203, 121.249369, 356))) },
+    RCMQ: { code: 'RCMQ', iata: 'RMQ', name: '台中清泉崗機場', elevM: 202, lat: 24.2647, lon: 120.6210,
+      runways: pair(P('18', 24.281481, 120.619633, 0, 45), P('36', 24.248642, 120.6218, 0, 45)) },
+    RCKH: { code: 'RCKH', iata: 'KHH', name: '高雄小港機場', elevM: 9, lat: 22.5771, lon: 120.3500,
+      runways: pair(P('09', 22.577492, 120.336417, 160), P('27', 22.576728, 120.361161, 445)) }
+  };
+})();
+
+
+</script>
+<script>
+(() => {
+'use strict';
+const { D2R, R2D, KT, FT, clamp, wrap180, wrap360 } = FS;
+const $ = id => document.getElementById(id);
+const AP_LIST = Object.values(AIRPORTS);
+const allRw = [];
+AP_LIST.forEach(a => a.runways.forEach(r => { r.ap = a; r.elevM = a.elevM; allRw.push(r); }));
+const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } };
+
+/* ================= 選單 ================= */
+function fillAirport(sel, def) { sel.innerHTML = AP_LIST.map(a => `<option value="${a.code}">${a.name}（${a.code}／${a.iata}）</option>`).join(''); sel.value = def; }
+function fillRunway(selA, selR, def) {
+  const a = AIRPORTS[selA.value]; const prev = selR.value;
+  selR.innerHTML = a.runways.map(r => `<option value="${r.id}">跑道 ${r.id}（航向 ${Math.round(r.hdg)}°，長 ${Math.round(r.len).toLocaleString()} 公尺）</option>`).join('');
+  selR.value = (def && a.runways.some(r => r.id === def)) ? def : (a.runways.some(r => r.id === prev) ? prev : a.runways[0].id);
+}
+fillAirport($('depA'), 'RCSS'); fillAirport($('dstA'), 'RCKH');
+fillRunway($('depA'), $('depR'), '10'); fillRunway($('dstA'), $('dstR'), '09');
+function rwOf(codeSel, idSel) { return AIRPORTS[codeSel.value].runways.find(r => r.id === idSel.value); }
+function updRoute() {
+  const a = rwOf($('depA'), $('depR')), b = rwOf($('dstA'), $('dstR'));
+  const d = FS.distance(a.thrLat, a.thrLon, b.thrLat, b.thrLon), brg = FS.bearing(a.thrLat, a.thrLon, b.thrLat, b.thrLon);
+  const same = $('depA').value === $('dstA').value;
+  $('route').innerHTML = `${a.ap.name} 跑道 ${a.id} → ${b.ap.name} 跑道 ${b.id}：直線距離約 <b>${(d / 1000).toFixed(0)}</b> 公里（${(d / 1852).toFixed(0)} 海里），方位 ${Math.round(brg)}°；` +
+    (same ? '同一機場（可練習起降與重飛）。' : `以 G500 巡航約 ${Math.max(8, Math.round(d / 1000 / 10 + 5))} 分鐘。`);
+}
+$('depA').onchange = () => { fillRunway($('depA'), $('depR')); updRoute(); };
+$('dstA').onchange = () => { fillRunway($('dstA'), $('dstR')); updRoute(); };
+$('depR').onchange = $('dstR').onchange = updRoute;
+updRoute();
+$('gkey').value = LS('fs_gkey') || '';
+if (LS('fs_q')) $('qual').value = LS('fs_q');
+const urlKey = new URLSearchParams(location.search).get('key'); if (urlKey) $('gkey').value = urlKey;
+
+
+/* ================= Cesium 載入（多 CDN 備援）================= */
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.crossOrigin = 'anonymous'; s.src = src; s.onload = res; s.onerror = () => { s.remove(); rej(new Error('load fail ' + src)); }; document.head.appendChild(s); }); }
+async function ensureCesium() {
+  if (window.Cesium) return;
+  let lastErr = '';
+  for (const base of window.CESIUM_BASES) {
+    try {
+      window.CESIUM_BASE_URL = base;
+      await Promise.race([loadScript(base + 'Cesium.js'), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 25000))]);
+      if (window.Cesium) {
+        dbg('Cesium 載入自 ' + base);
+        const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = base + 'Widgets/widgets.css'; document.head.appendChild(l);
+        return;
+      }
+    } catch (e) { lastErr = e.message; }
+  }
+  throw new Error('無法載入 Cesium 函式庫（已嘗試 ' + window.CESIUM_BASES.length + ' 個來源）。請確認網路可連到 cesium.com 或 cdn.jsdelivr.net，且此頁面不是在禁止外部腳本的預覽環境中開啟；建議直接用瀏覽器開啟或部署到網站。');
+}
+
+const SAFE = /[?&]safe=1/.test(location.search) || LS('fs_safe') === '1';
+/* ================= 狀態 ================= */
+let viewer = null, tileset = null, mode = 'fallback', planeModel = null, planeReady = false;
+let S = null, mission = null, running = false, paused = false, timeScale = 1;
+let viewIdx = 0, showHud = true, showMap = true, muted = false;
+const VIEWS = ['座艙', '機後追尾', '塔台'];
+const inp = { pitch: 0, roll: 0, yaw: 0, thr: 0, brake: 0, flaps: 1, gear: true, spoil: false, rev: false, invp: false, assist: true, sprot: true };
+const keys = {};
+let flags = null, trail = [];
+let gndCache = 0, gndOK = false, lastSample = 0;
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+/* ================= 地面高度／跑道判斷 ================= */
+function onRwy(lat, lon) {
+  for (const r of allRw) {
+    const [e, n] = FS.enu(r.thrLat, r.thrLon, lat, lon);
+    if (Math.abs(e) > 5000 || Math.abs(n) > 5000) continue;
+    const h = r.hdg * D2R, al = e * Math.sin(h) + n * Math.cos(h), xt = e * Math.cos(h) - n * Math.sin(h);
+    if (al > -r.disp - 60 && al < r.len + 60 && Math.abs(xt) < r.w / 2 + 25) return true;
+  }
+  return false;
+}
+function fbGround(lat, lon) {
+  let best = 0;
+  for (const a of AP_LIST) { const d = FS.distance(lat, lon, a.lat, a.lon); best = Math.max(best, a.elevM * clamp(1 - (d - 6000) / 1500, 0, 1)); }
+  return best;
+}
+function groundAt(lat, lon) { return mode === 'google' ? gndCache : fbGround(lat, lon); }
+function sampleGround(lat, lon) {
+  if (mode !== 'google' || !viewer) return;
+  const sc = viewer.scene;
+  if (!sc.sampleHeightSupported) return;
+  const h = sc.sampleHeight(Cesium.Cartographic.fromDegrees(lon, lat), planeModel ? [planeModel] : [], 0.1);
+  if (h !== undefined && isFinite(h)) { gndCache = h; gndOK = true; }
+}
+const ENV = { ground: groundAt, onRunway: onRwy };
+
+/* ================= 飛機 3D 模型（程式生成 glTF）================= */
+function buildAircraftGLTF() {
+  const mats = [
+    { c: [0.94, 0.95, 0.97, 1], r: 0.45 }, // 0 機身白
+    { c: [0.72, 0.76, 0.82, 1], r: 0.5 },  // 1 機翼灰
+    { c: [0.08, 0.2, 0.45, 1], r: 0.5 },   // 2 尾翼藍
+    { c: [0.2, 0.2, 0.22, 1], r: 0.6 },    // 3 引擎深灰
+    { c: [0.1, 0.1, 0.1, 1], r: 0.9 }      // 4 起落架
+  ];
+  const G = mats.map(() => ({ p: [], n: [], i: [] }));
+  const tri = (g, a, b, c) => { // 平面著色三角形
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+    const k = g.p.length / 3; [a, b, c].forEach(q => { g.p.push(q[0], q[1], q[2]); g.n.push(nx, ny, nz); }); g.i.push(k, k + 1, k + 2);
+  };
+  const prism = (m, poly, ax, t, off) => { // poly: [[u,v]...] 逆時針；ax: 'y' 表示多邊形位於 XZ 平面、厚度沿 y；'x' 表示位於 YZ 平面、厚度沿 x
+    const g = G[m], map = (u, v, s) => ax === 'y' ? [u, off + s * t / 2, v] : [off + s * t / 2, u, v];
+    for (let i = 1; i < poly.length - 1; i++) {
+      tri(g, map(...poly[0], 1), map(...poly[i], 1), map(...poly[i + 1], 1));
+      tri(g, map(...poly[0], -1), map(...poly[i + 1], -1), map(...poly[i], -1));
+    }
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length];
+      tri(g, map(...a, -1), map(...b, -1), map(...b, 1)); tri(g, map(...a, -1), map(...b, 1), map(...a, 1));
+    }
+  };
+  const cyl = (m, r0, r1, z0, z1, seg, cx, cy) => {
+    const g = G[m], base = g.p.length / 3;
+    for (let s = 0; s <= seg; s++) {
+      const a = s / seg * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+      g.p.push(cx + ca * r0, cy + sa * r0, z0, cx + ca * r1, cy + sa * r1, z1);
+      const dr = r0 - r1, dz = z1 - z0, l = Math.hypot(dr, dz) || 1;
+      g.n.push(ca * dz / l, sa * dz / l, dr / l, ca * dz / l, sa * dz / l, dr / l);
+    }
+    for (let s = 0; s < seg; s++) { const k = base + s * 2; g.i.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
+  };
+  // 機身（z 為機頭方向）：機鼻→機身→尾錐
+  cyl(0, 0.12, 1.1, 13.9, 11.6, 16, 0, 0); cyl(0, 1.1, 1.18, 11.6, 6, 16, 0, 0); cyl(0, 1.18, 1.18, 6, -7, 16, 0, 0); cyl(0, 1.18, 0.35, -7, -13.8, 16, 0, 0);
+  // 機翼（後掠）
+  [1, -1].forEach(s => {
+    prism(1, s > 0 ? [[1, 3.2], [1, -2.6], [12.9, -7.6], [12.9, -6.2], [6, 0.3]] : [[-1, 3.2], [-6, 0.3], [-12.9, -6.2], [-12.9, -7.6], [-1, -2.6]], 'y', 0.34, -0.55);
+    prism(2, s > 0 ? [[12.9, -6.2], [12.9, -7.6], [13.15, -7.7], [13.15, -5.2]] : [[-12.9, -7.6], [-12.9, -6.2], [-13.15, -5.2], [-13.15, -7.7]], 'y', 0.3, -0.5);
+    // 水平尾翼（T 尾）
+    prism(1, s > 0 ? [[0.2, -11.6], [0.2, -13.9], [5.1, -14.2], [5.1, -13.1]] : [[-0.2, -11.6], [-5.1, -13.1], [-5.1, -14.2], [-0.2, -13.9]], 'y', 0.22, 6.4);
+    // 引擎
+    cyl(3, 0.62, 0.62, -7.2, -11.6, 14, s * 1.95, 1.0); cyl(3, 0.3, 0.62, -6.6, -7.2, 14, s * 1.95, 1.0); cyl(3, 0.62, 0.45, -11.6, -12.4, 14, s * 1.95, 1.0);
+  });
+  prism(2, [[-8.0, 1.0], [-14.0, 1.0], [-14.2, 6.9], [-12.3, 6.9]], 'x', 0.26, 0);
+  // 起落架（獨立節點）
+  const gear = { p: [], n: [], i: [] };
+  const gcyl = (r, z, x, y0, y1) => { // 垂直柱：以細柱＋輪子簡化
+    const g = gear; prismBox(g, x - r, y0, z - r, x + r, y1, z + r);
+  };
+  function prismBox(g, x0, y0, z0, x1, y1, z1) {
+    const v = [[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]];
+    [[0, 1, 2, 3], [5, 4, 7, 6], [4, 0, 3, 7], [1, 5, 6, 2], [3, 2, 6, 7], [4, 5, 1, 0]].forEach(f => { tri(g, v[f[0]], v[f[1]], v[f[2]]); tri(g, v[f[0]], v[f[2]], v[f[3]]); });
+  }
+  gcyl(0.09, 9.0, 0, -2.0, -1.0); prismBox(gear, -0.32, -2.1, 8.8, 0.32, -1.78, 9.2);
+  [1, -1].forEach(s => { gcyl(0.11, -1.8, s * 2.2, -2.15, -1.0); prismBox(gear, s * 2.2 - 0.22, -2.28, -2.1, s * 2.2 + 0.22, -1.86, -1.5); prismBox(gear, s * 2.2 - 0.22, -2.28, -1.4, s * 2.2 + 0.22, -1.86, -0.9); });
+  const groups = G.map((g, i) => ({ g, m: i })).filter(o => o.g.p.length);
+  const all = groups.map(o => o.g).concat([gear]);
+  let nb = 0; all.forEach(g => { nb += g.p.length * 4 + g.n.length * 4 + Math.ceil(g.i.length * 2 / 4) * 4; });
+  const buf = new ArrayBuffer(nb), dv = new DataView(buf); let off = 0;
+  const bufferViews = [], accessors = []; const prims = [], gearPrims = [];
+  all.forEach((g, gi) => {
+    const mk = (arr, type, target, comp, ct) => {
+      const bv = bufferViews.length; const bytes = type === 'f' ? arr.length * 4 : arr.length * 2;
+      bufferViews.push({ buffer: 0, byteOffset: off, byteLength: bytes, target });
+      arr.forEach((v, k) => { if (type === 'f') dv.setFloat32(off + k * 4, v, true); else dv.setUint16(off + k * 2, v, true); });
+      off += type === 'f' ? bytes : Math.ceil(bytes / 4) * 4;
+      const acc = { bufferView: bv, componentType: ct, count: arr.length / comp, type: comp === 3 ? 'VEC3' : 'SCALAR' };
+      if (comp === 3 && type === 'f') { const mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9]; for (let k = 0; k < arr.length; k += 3) for (let c = 0; c < 3; c++) { mn[c] = Math.min(mn[c], arr[k + c]); mx[c] = Math.max(mx[c], arr[k + c]); } acc.min = mn; acc.max = mx; }
+      accessors.push(acc); return accessors.length - 1;
+    };
+    const pa = mk(g.p, 'f', 34962, 3, 5126), na = mk(g.n, 'f', 34962, 3, 5126), ia = mk(g.i, 'i', 34963, 1, 5123);
+    const prim = { attributes: { POSITION: pa, NORMAL: na }, indices: ia, material: gi < groups.length ? groups[gi].m : 4 };
+    (gi < groups.length ? prims : gearPrims).push(prim);
+  });
+  const u8 = new Uint8Array(buf); let bin = ''; for (let i = 0; i < u8.length; i += 8192) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 8192));
+  return {
+    asset: { version: '2.0' }, scene: 0, scenes: [{ nodes: [0, 1] }],
+    nodes: [{ name: 'body', mesh: 0 }, { name: 'gear', mesh: 1 }],
+    meshes: [{ primitives: prims }, { primitives: gearPrims }],
+    materials: mats.map(m => ({ pbrMetallicRoughness: { baseColorFactor: m.c, metallicFactor: 0.2, roughnessFactor: m.r }, doubleSided: true })),
+    accessors, bufferViews, buffers: [{ byteLength: nb, uri: 'data:application/octet-stream;base64,' + btoa(bin) }]
+  };
+}
+
+/* ================= Cesium 初始化 ================= */
+const DBG = [];
+function dbg(s) { DBG.push(((performance.now() / 1000).toFixed(1)) + 's ' + s); if (DBG.length > 40) DBG.shift(); }
+['error', 'warn'].forEach(k => { const o = console[k]; console[k] = function () { try { dbg(k + ': ' + Array.from(arguments).map(a => (a && a.message) || String(a)).join(' ').slice(0, 220)); } catch (e) { } return o.apply(console, arguments); }; });
+function showErr(title, err) {
+  let d = $('errbox'); if (!d) { d = document.createElement('div'); d.id = 'errbox'; d.style.cssText = 'position:absolute;left:8px;right:8px;bottom:8px;max-height:45%;overflow:auto;z-index:30;background:rgba(60,15,15,.95);color:#ffd6d6;font:12px/1.5 ui-monospace,Menlo,monospace;padding:10px 12px;border-radius:8px;white-space:pre-wrap;user-select:text;-webkit-user-select:text'; document.body.appendChild(d); }
+  let gl = ''; try { const c = document.createElement('canvas'), g = c.getContext('webgl2') || c.getContext('webgl'), x = g && g.getExtension('WEBGL_debug_renderer_info'); gl = g ? ((g instanceof WebGL2RenderingContext ? 'WebGL2 ' : 'WebGL1 ') + (x ? g.getParameter(x.UNMASKED_RENDERER_WEBGL) : '')) : '無 WebGL'; } catch (e) { gl = 'WebGL 檢查失敗'; }
+  d.textContent = title + '：' + ((err && (err.message || err.toString())) || err) + '\n' + ((err && err.stack) || '').split('\n').slice(0, 5).join('\n') + '\n--- 診斷 ---\n' + gl + ' | ' + (window.Cesium ? 'Cesium ' + Cesium.VERSION : '無 Cesium') + ' | base=' + (window.CESIUM_BASE_URL || '') + ' | mode=' + mode + '\n' + DBG.slice(-14).join('\n') + '\n（請把這整段文字貼給我）';
+}
+function toast(t, ms = 2200) { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', ms); }
+function ecef(lat, lon, h) { return Cesium.Cartesian3.fromDegrees(lon, lat, h); }
+function enuToEcef(lat, lon, h, e, n, u) {
+  const m = Cesium.Transforms.eastNorthUpToFixedFrame(ecef(lat, lon, h)); return Cesium.Matrix4.multiplyByPoint(m, new Cesium.Cartesian3(e, n, u), new Cesium.Cartesian3());
+}
+async function initViewer(key, sse) {
+  if (!viewer) {
+    Cesium.Ion.defaultAccessToken = '';
+    viewer = new Cesium.Viewer('cv', {
+      baseLayer: false, baseLayerPicker: false, geocoder: false, homeButton: false, sceneModePicker: false, navigationHelpButton: false,
+      animation: false, timeline: false, fullscreenButton: false, infoBox: false, selectionIndicator: false, vrButton: false,
+      creditContainer: $('credit'), showRenderLoopErrors: false, contextOptions: SAFE ? { requestWebgl1: true } : undefined
+    });
+    viewer.scene.renderError.addEventListener((sc, err) => {
+      showErr('Cesium 繪圖錯誤', err);
+      if (!SAFE) { LS('fs_safe', '1'); toast('偵測到繪圖錯誤，4 秒後以相容模式重新載入…', 5000); setTimeout(() => location.reload(), 4000); }
+    });
+    const sc = viewer.scene;
+    sc.screenSpaceCameraController.enableInputs = false;
+    sc.globe.baseColor = Cesium.Color.fromCssColorString('#6b8a55');
+    try { viewer.imageryLayers.addImageryProvider(new Cesium.GridImageryProvider({ cells: 8, color: Cesium.Color.fromCssColorString('#86a86c').withAlpha(0.55), glowColor: Cesium.Color.fromCssColorString('#86a86c').withAlpha(0.0), glowWidth: 1, backgroundColor: Cesium.Color.fromCssColorString('#648350'), tileWidth: 256, tileHeight: 256 })); dbg('地面圖層 OK'); } catch (e) { dbg('地面圖層失敗 ' + e.message); }
+    sc.skyAtmosphere.show = !SAFE; sc.fog.enabled = !SAFE; sc.highDynamicRange = false;
+    if (SAFE) { sc.logarithmicDepthBuffer = false; viewer.useBrowserRecommendedResolution = false; viewer.resolutionScale = 1; sc.globe.showGroundAtmosphere = false; sc.globe.enableLighting = false; sc.globe.depthTestAgainstTerrain = false; sc.backgroundColor = Cesium.Color.fromCssColorString('#7fb2e5'); sc.skyBox && (sc.skyBox.show = false); sc.sun && (sc.sun.show = false); sc.moon && (sc.moon.show = false); }
+    sc.camera.frustum.fov = 75 * D2R; sc.camera.frustum.near = 0.5;
+    viewer.clock.currentTime = Cesium.JulianDate.fromIso8601('2026-11-28T04:30:00Z'); viewer.clock.shouldAnimate = false;
+    if (!SAFE) try { const m = await Cesium.Model.fromGltfAsync({ gltf: buildAircraftGLTF(), scale: 1, minimumPixelSize: 0 }); viewer.scene.primitives.add(m); planeModel = m; m.show = false; }
+    catch (err) { console.warn('飛機模型建立失敗', err); }
+    dbg('viewer 建立完成，模型 ' + (planeModel ? 'OK' : '失敗'));
+    sc.preRender.addEventListener(frame);
+    buildFallbackScenery();
+  }
+  viewer.resolutionScale = 1;
+  // 3D 圖磚
+  if (tileset) { viewer.scene.primitives.remove(tileset); tileset = null; }
+  mode = 'fallback';
+  if (key) {
+    try {
+      tileset = await Cesium.Cesium3DTileset.fromUrl('https://tile.googleapis.com/v1/3dtiles/root.json?key=' + encodeURIComponent(key), {
+        showCreditsOnScreen: true, maximumScreenSpaceError: sse, dynamicScreenSpaceError: true, cacheBytes: 768 * 1024 * 1024, maximumCacheOverflowBytes: 512 * 1024 * 1024
+      });
+      viewer.scene.primitives.add(tileset); mode = 'google';
+      viewer.scene.globe.show = false; fb.forEach(e => e.show = false);
+      tileset.tileFailed.addEventListener(e => { if (!initViewer.warned) { initViewer.warned = true; toast('圖磚載入失敗：' + (e.message || '').slice(0, 60), 5000); } });
+    } catch (err) {
+      console.warn(err); toast('Google 3D 圖磚連線失敗（金鑰錯誤、未啟用 Map Tiles API 或未開帳單？），改用簡易地球。', 6000);
+    }
+  }
+  if (mode !== 'google') { viewer.scene.globe.show = true; fb.forEach(e => e.show = true); }
+  S && (S.N = mode === 'google' ? 21 : 0);
+}
+const fb = [];
+function buildFallbackScenery() {
+  const col = Cesium.Color;
+  AP_LIST.forEach(a => {
+    if (a.elevM > 0 && !SAFE) fb.push(viewer.entities.add({ position: ecef(a.lat, a.lon, 0), ellipse: { semiMajorAxis: 6000, semiMinorAxis: 6000, height: a.elevM, extrudedHeight: 0, material: col.fromCssColorString('#7d8f63') } }));
+    a.runways.forEach(r => {
+      const back = FS.dest(r.thrLat, r.thrLon, wrap360(r.hdg + 180), r.disp), h0 = r.hdg;
+      const pts = [], w = r.w / 2, L = r.len + r.disp;
+      const c = (al, xt) => { const p = FS.dest(back[0], back[1], h0, al); const q = FS.dest(p[0], p[1], wrap360(h0 + 90), xt); return [q[1], q[0]]; };
+      [c(0, -w), c(0, w), c(L, w), c(L, -w)].forEach(p => pts.push(p[0], p[1]));
+      fb.push(viewer.entities.add({ polygon: { hierarchy: Cesium.Cartesian3.fromDegreesArray(pts), height: a.elevM + 0.4, material: col.fromCssColorString('#3c3f44') } }));
+      const cl = []; [c(40, 0), c(L - 40, 0)].forEach(p => cl.push(p[0], p[1], a.elevM + 0.6));
+      fb.push(viewer.entities.add({ polyline: { positions: Cesium.Cartesian3.fromDegreesArrayHeights(cl), width: 2, material: col.WHITE } }));
+    });
+  });
+  // 台灣島示意：不繪製，僅提供基礎地形顏色
+}
+
+/* ================= 任務／起始 ================= */
+function newMission() {
+  const dep = rwOf($('depA'), $('depR')), dst = rwOf($('dstA'), $('dstR'));
+  const d = FS.distance(dep.thrLat, dep.thrLon, dst.thrLat, dst.thrLon);
+  const cruiseFt = clamp(Math.round(d / 1000 * 85 / 1000) * 1000, 4000, 31000);
+  return { dep, dst, rwy: dst, cruiseAlt: cruiseFt * FT, distM: d };
+}
+function spawn() {
+  mission = newMission();
+  const dep = mission.dep;
+  const st = FS.newState();
+  st.N = mode === 'google' ? 21 : 0;
+  const back = dep.disp - 30;
+  const [la, lo] = FS.dest(dep.thrLat, dep.thrLon, wrap360(dep.hdg + 180), back);
+  st.lat = la; st.lon = lo; st.chi = st.psi = dep.hdg;
+  const g = gndOK ? gndCache : dep.elevM + st.N;
+  st.h = g + FS.AC.cgGear; st.gndH = g; st.onGround = true; st.gear = 1; st.V = 0; st.thr = 0;
+  st.fuel = clamp(2800 + mission.distM / 1000 * 7, 3200, FS.AC.fuelCap);
+  st.flapDeg = FS.AC.flapDeg[1];
+  S = st; S.events = [];
+  inp.thr = 0; inp.flaps = 1; inp.gear = true; inp.spoil = false; inp.pitch = inp.roll = inp.yaw = 0;
+  flags = { airborne: false, td: null, crashed: false, done: false, maxG: 1 };
+  trail = []; timeScale = 1;
+  dep.elevHAE = null; mission.dst.elevHAE = null;
+}
+
+/* ================= 輸入 ================= */
+const KEYMAP_PREVENT = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown', 'Home', 'End']);
+addEventListener('keydown', e => {
+  if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+  if (KEYMAP_PREVENT.has(e.code)) e.preventDefault();
+  if (e.repeat) { keys[e.code] = true; return; }
+  keys[e.code] = true; if (running) onKey(e.code);
+  if (e.code === 'Escape') toggleMenu();
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+function onKey(c) {
+  if (!S || S.dead) return;
+  const ap = S.ap;
+  switch (c) {
+    case 'KeyG': inp.gear = !inp.gear; toast(inp.gear ? '起落架：放下' : '起落架：收起'); break;
+    case 'KeyF': inp.flaps = Math.min(3, inp.flaps + 1); toast('襟翼 ' + FS.AC.flapDeg[inp.flaps] + '°'); break;
+    case 'KeyR': inp.flaps = Math.max(0, inp.flaps - 1); toast('襟翼 ' + FS.AC.flapDeg[inp.flaps] + '°'); break;
+    case 'KeyX': inp.spoil = !inp.spoil; toast(inp.spoil ? '減速板：展開' : '減速板：收回'); break;
+    case 'KeyC': viewIdx = (viewIdx + 1) % VIEWS.length; toast('視角：' + VIEWS[viewIdx]); break;
+    case 'KeyM': showMap = !showMap; $('map').style.display = showMap ? 'block' : 'none'; break;
+    case 'KeyD': checkWorld('手動'); setTimeout(() => showErr('診斷資訊（再按 D 可更新）', '請把這段貼給我'), 900); break;
+    case 'KeyH': showHud = !showHud; break;
+    case 'KeyP': paused = !paused; toast(paused ? '暫停' : '繼續'); break;
+    case 'KeyU': muted = !muted; toast(muted ? '音效：關' : '音效：開'); break;
+    case 'BracketLeft': timeScale = Math.max(1, timeScale / 2); toast('時間 ×' + timeScale); break;
+    case 'BracketRight': timeScale = Math.min(4, timeScale * 2); toast('時間 ×' + timeScale); break;
+    case 'KeyA': apToggle(); break;
+    case 'KeyT': ap.at = !ap.at; toast('自動油門：' + (ap.at ? '開' : '關')); if (!ap.at) inp.thr = S.thr; break;
+    case 'KeyN': if (!S.onGround) { if (!ap.on) apToggle(true); ap.lat = 'NAV'; ap.navLat = mission.dst.thrLat; ap.navLon = mission.dst.thrLon; ap.auto = false; toast('導航：飛往 ' + mission.dst.ap.name + ' 跑道 ' + mission.dst.id); } break;
+    case 'KeyL': if (!S.onGround) { if (!ap.on) apToggle(true); ap.auto = true; ap.at = true; ap.stage = null; ap.gsCap = false; ap.land = false; toast('全自動進場＋降落已啟動（操縱桿大幅動作可解除）'); } break;
+    case 'Comma': ap.lat = 'HDG'; ap.hdg = wrap360(Math.round(ap.hdg / 5) * 5 - 5); apEngage(); break;
+    case 'Period': ap.lat = 'HDG'; ap.hdg = wrap360(Math.round(ap.hdg / 5) * 5 + 5); apEngage(); break;
+    case 'PageUp': ap.alt += 1000 * FT; ap.vert = 'ALT'; ap.auto = false; apEngage(); break;
+    case 'PageDown': ap.alt = Math.max(0, ap.alt - 1000 * FT); ap.vert = 'ALT'; ap.auto = false; apEngage(); break;
+    case 'Home': ap.spd = Math.min(340, ap.spd + 10); break;
+    case 'End': ap.spd = Math.max(110, ap.spd - 10); break;
+  }
+}
+function apEngage() { if (!S.ap.on) apToggle(true); }
+function apToggle(silent) {
+  const ap = S.ap;
+  if (ap.on && !silent) { ap.on = false; ap.auto = false; inp.thr = S.thr; toast('自動駕駛：解除'); return; }
+  if (S.onGround) { toast('請先起飛後再啟用自動駕駛'); return; }
+  const hm = S.h - S.N, ias = S.V * Math.sqrt(FS.atmos(hm).rho / FS.RHO0) / KT;
+  ap.on = true; ap.auto = false; ap.land = false; ap.lat = 'HDG'; ap.vert = 'ALT'; ap.hdg = Math.round(S.chi); ap.alt = Math.round(hm / FT / 100) * 100 * FT;
+  ap.spd = clamp(Math.round(ias / 10) * 10, 140, 340); ap.at = true; ap.rwy = mission.dst; ap.gsCap = false; ap.stage = null;
+  if (!silent) toast('自動駕駛：維持航向 ' + ap.hdg + '°、高度 ' + Math.round(ap.alt / FT).toLocaleString() + ' 呎');
+}
+function smooth(v, target, up, down, dt) { const r = Math.abs(target) > Math.abs(v) || target * v < 0 ? up : down; return v + clamp(target - v, -r * dt, r * dt); }
+
+// 手把
+function readPad() {
+  let gp = null;
+  if (readPad.off) return null;
+  try { gp = (navigator.getGamepads && navigator.getGamepads() || []).find(g => g && g.connected); } catch (e) { readPad.off = true; return null; }
+  if (!gp) return null;
+  const dz = v => Math.abs(v) < 0.08 ? 0 : v;
+  const b = i => gp.buttons[i] && gp.buttons[i].pressed;
+  const p = { roll: dz(gp.axes[0] || 0), pitch: -dz(gp.axes[1] || 0), yaw: dz(gp.axes[2] || 0), thrUp: b(7) ? 1 : 0, thrDn: b(6) ? 1 : 0, brake: b(1) ? 1 : 0, gear: b(0), flapUp: b(4), flapDn: b(5), spoil: b(3), ap: b(2), cam: b(9) };
+  const prev = readPad.prev || {};
+  if (running && S && !S.dead) {
+    if (p.gear && !prev.gear) onKey('KeyG'); if (p.flapDn && !prev.flapDn) onKey('KeyF'); if (p.flapUp && !prev.flapUp) onKey('KeyR');
+    if (p.spoil && !prev.spoil) onKey('KeyX'); if (p.ap && !prev.ap) onKey('KeyA'); if (p.cam && !prev.cam) onKey('KeyC');
+  }
+  readPad.prev = p; return p;
+}
+
+// 觸控
+const isTouch = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
+const touchState = { x: 0, y: 0, thr: 0, brake: false };
+if (isTouch) {
+  $('touch').style.display = 'block'; $('map').style.top = '52px';
+  const pad = $('tpad'), kn = $('tknob');
+  const setPad = (t) => { const r = pad.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2; let x = (t.clientX - cx) / (r.width / 2), y = (t.clientY - cy) / (r.height / 2); const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; } touchState.x = x; touchState.y = y; kn.style.transform = `translate(${x * 46}px,${y * 46}px)`; };
+  pad.addEventListener('touchstart', e => { setPad(e.changedTouches[0]); e.preventDefault(); }, { passive: false });
+  pad.addEventListener('touchmove', e => { setPad(e.changedTouches[0]); e.preventDefault(); }, { passive: false });
+  pad.addEventListener('touchend', () => { touchState.x = touchState.y = 0; kn.style.transform = ''; });
+  const th = $('tthr'), setThr = t => { const r = th.getBoundingClientRect(); touchState.thr = clamp(1 - (t.clientY - r.top) / r.height, 0, 1); $('tthri').style.height = (touchState.thr * 100) + '%'; inp.thr = touchState.thr; };
+  th.addEventListener('touchstart', e => { setThr(e.changedTouches[0]); e.preventDefault(); }, { passive: false });
+  th.addEventListener('touchmove', e => { setThr(e.changedTouches[0]); e.preventDefault(); }, { passive: false });
+  document.querySelectorAll('#tbt button').forEach(b => {
+    const k = b.dataset.k, map = { g: 'KeyG', f: 'KeyF', r: 'KeyR', x: 'KeyX', c: 'KeyC', a: 'KeyA', n: 'KeyN', l: 'KeyL' };
+    if (k === 'b') { b.addEventListener('touchstart', e => { touchState.brake = true; e.preventDefault(); }, { passive: false }); b.addEventListener('touchend', () => touchState.brake = false); }
+    else b.addEventListener('touchstart', e => { if (running) onKey(map[k]); e.preventDefault(); }, { passive: false });
+  });
+}
+
+/* ================= 音效 ================= */
+let actx = null, osc1, osc2, gEng, gWind, nz;
+function initAudio() {
+  if (actx) return; try {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    gEng = actx.createGain(); gEng.gain.value = 0; const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900;
+    osc1 = actx.createOscillator(); osc1.type = 'sawtooth'; osc2 = actx.createOscillator(); osc2.type = 'triangle';
+    osc1.connect(lp); osc2.connect(lp); lp.connect(gEng); gEng.connect(actx.destination); osc1.start(); osc2.start();
+    const len = actx.sampleRate * 2, b = actx.createBuffer(1, len, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    nz = actx.createBufferSource(); nz.buffer = b; nz.loop = true; const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 700; gWind = actx.createGain(); gWind.gain.value = 0;
+    nz.connect(bp); bp.connect(gWind); gWind.connect(actx.destination); nz.start();
+  } catch (e) { actx = null; }
+}
+function updAudio() {
+  if (!actx || !S) return;
+  const on = running && !paused && !muted && !S.dead ? 1 : 0;
+  const t = actx.currentTime;
+  osc1.frequency.setTargetAtTime(55 + S.thr * 95, t, .1); osc2.frequency.setTargetAtTime(110 + S.thr * 190, t, .1);
+  gEng.gain.setTargetAtTime(on * (0.025 + S.thr * 0.05), t, .15);
+  gWind.gain.setTargetAtTime(on * clamp(S.V / 260, 0, 1) * 0.07, t, .2);
+}
+
+/* ================= 每影格 ================= */
+let lastT = 0, accT = 0;
+function frame() { try { frame0(); } catch (e) { if (!frame.err) { frame.err = 1; console.error(e); toast('發生錯誤：' + (e.message || e).toString().slice(0, 80), 6000); } } }
+function frame0() {
+  const now = performance.now(); let dt = Math.min((now - (lastT || now)) / 1000, 0.1); lastT = now;
+  if (!running || !S) return;
+  const pad = readPad();
+  if (!paused && !S.dead) {
+    // 輸入
+    const kx = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
+    let ky = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0); if (inp.invp) ky = -ky;
+    const kyaw = (keys.KeyE ? 1 : 0) - (keys.KeyQ ? 1 : 0);
+    let tx = kx, ty = ky, tyaw = kyaw;
+    if (pad) { if (Math.abs(pad.roll) > 0) tx = pad.roll; if (Math.abs(pad.pitch) > 0) ty = inp.invp ? -pad.pitch : pad.pitch; if (Math.abs(pad.yaw) > 0) tyaw = pad.yaw; }
+    if (isTouch && (touchState.x || touchState.y)) { tx = touchState.x; ty = inp.invp ? touchState.y : -touchState.y; tyaw = touchState.x * 0.6; }
+    inp.roll = smooth(inp.roll, tx, 2.6, 4.5, dt); inp.pitch = smooth(inp.pitch, ty, 2.2, 4.5, dt); inp.yaw = smooth(inp.yaw, tyaw, 3, 5, dt);
+    const up = (keys.KeyW ? 1 : 0) + (pad ? pad.thrUp : 0), dn = (keys.KeyS ? 1 : 0) + (pad ? pad.thrDn : 0);
+    if (up || dn) inp.thr = clamp(inp.thr + (up - dn) * 0.4 * dt, 0, 1);
+    inp.brake = (keys.Space || touchState.brake || (pad && pad.brake)) ? 1 : 0; inp.rev = !!keys.KeyZ;
+    const ap = S.ap;
+    if (ap.on && !S.onGround && (Math.abs(inp.pitch) > 0.45 || Math.abs(inp.roll) > 0.45)) { ap.on = false; ap.auto = false; inp.thr = S.thr; toast('自動駕駛：手動解除'); }
+    if (ap.on && S.onGround && !ap.land) { ap.on = false; ap.auto = false; }
+    // AP 管理：全自動模式
+    let flapsIdx = inp.flaps, gearCmd = inp.gear, spoilCmd = inp.spoil;
+    if (ap.on && ap.auto) {
+      FS.apManage(S, mission, dt);
+      if (ap.cfg) { flapsIdx = Math.max(ap.cfg.flaps, flapsIdx > 0 && S.onGround ? flapsIdx : 0); gearCmd = ap.cfg.gear || (S.gear > 0.5 && S.onGround); inp.flaps = flapsIdx; inp.gear = gearCmd; }
+      if (S.onGround) spoilCmd = true;
+    }
+    if (ap.on && ap.land && S.onGround && keys.KeyE !== undefined && (keys.KeyQ || keys.KeyE)) { /* 手動方向舵優先 */ }
+    const c = { pitch: inp.pitch, roll: inp.roll, yaw: inp.yaw, thrCmd: inp.thr, brake: inp.brake, rev: inp.rev, spoilCmd, gearCmd, flapsIdx, assist: inp.assist, stallProt: inp.sprot };
+    // 手動覆蓋自動滾行的方向舵
+    const n = Math.max(1, Math.ceil(dt * timeScale / (1 / 60))), h = dt * timeScale / n;
+    for (let i = 0; i < n; i++) {
+      FS.step(S, c, ENV, h);
+      if (S.events.length) { handleEvents(); if (S.dead) break; }
+    }
+    if (!ap.at || !ap.on) { /* 手動：油門桿即命令 */ } else inp.thr = S.thr;
+    if (ap.on && ap.stage) { const gh = S.gndH; }
+    // 取樣地面高度
+    if (mode === 'google' && now - lastSample > 40) { lastSample = now; sampleGround(S.lat, S.lon); }
+    // 跑道面高度校正（接近目的地時取樣）
+    calibrateRunway();
+    if (S.time - (trail.t || -9) > 2) { trail.t = S.time; trail.push([S.lat, S.lon]); if (trail.length > 400) trail.shift(); }
+    checkLanded();
+  }
+  placeAircraftAndCamera();
+  drawHUD(); drawMap(); updAudio();
+  if (touchState.thr === 0 && isTouch) { $('tthri').style.height = (inp.thr * 100) + '%'; }
+}
+function calibrateRunway() {
+  if (mode !== 'google') return;
+  const r = mission.dst, d = FS.distance(S.lat, S.lon, r.thrLat, r.thrLon);
+  if (d < 1500 && S.gndH && S.onGround === false && S.h - S.gndH < 60) { /* 即將著陸，以實測為主 */ }
+  if (d < 800 && r.elevHAE == null) { /* 僅在實際取樣於跑道上時 */ }
+  if (S.onGround && onRwy(S.lat, S.lon)) { const rr = nearestRunway(); if (rr && gndOK) rr.elevHAE = gndCache; }
+}
+function nearestRunway() {
+  let best = null, bd = 1e9; for (const r of allRw) { const d = FS.distance(S.lat, S.lon, r.thrLat, r.thrLon); if (d < bd) { bd = d; best = r; } } return best;
+}
+
+/* ================= 事件／降落評分 ================= */
+function handleEvents() {
+  for (const e of S.events) {
+    if (e.type === 'liftoff') { flags.airborne = true; flags.td = null; toast('離地'); }
+    else if (e.type === 'touchdown') { flags.td = e.info; if (flags.airborne) flags.tdPos = rwyRel(e.info.lat, e.info.lon); }
+    else if (e.type === 'crash' && !flags.crashed) { flags.crashed = true; S.dead = true; crashScreen(e.reason); }
+    else if (e.type === 'warn') toast(e.msg, 2500);
+  }
+  S.events = [];
+}
+function rwyRel(lat, lon) {
+  let best = null;
+  for (const r of allRw) {
+    const [e, n] = FS.enu(r.thrLat, r.thrLon, lat, lon); const h = r.hdg * D2R;
+    const al = e * Math.sin(h) + n * Math.cos(h), xt = e * Math.cos(h) - n * Math.sin(h);
+    if (al > -r.disp - 300 && al < r.len + 300 && Math.abs(xt) < 400) { if (!best || Math.abs(xt) < Math.abs(best.xt)) best = { r, al, xt }; }
+  }
+  return best;
+}
+function crashScreen(reason) {
+  $('rtitle').textContent = '💥 飛機受損'; $('rbody').innerHTML = `原因：${reason}。<br>${flags.td ? `接地：下降率 ${Math.round(flags.td.vsFpm)} fpm、指示空速 ${Math.round(flags.td.ias)} 節、坡度 ${flags.td.bank.toFixed(1)}°` : ''}`;
+  setTimeout(() => $('result').classList.remove('hide'), 900);
+}
+function checkLanded() {
+  if (flags.done || flags.crashed || !flags.airborne || !flags.td || !S.onGround || S.V > 2.5) return;
+  flags.done = true;
+  const t = flags.td, rel = flags.tdPos, dst = mission.dst;
+  let score = 100; const notes = [];
+  const vsPen = clamp((t.vsFpm - 250) / 15, 0, 30); score -= vsPen; if (vsPen > 0) notes.push(`下降率 ${Math.round(t.vsFpm)} fpm（理想 ≤ 250）`);
+  const vref = FS.vref(S); const dv = Math.abs(t.ias - vref); const vp = clamp((dv - 8) * 1.2, 0, 15); score -= vp; if (vp > 0) notes.push(`接地速度 ${Math.round(t.ias)} 節（參考 Vref ≈ ${Math.round(vref)} 節）`);
+  const bp = clamp((Math.abs(t.bank) - 3) * 2.5, 0, 10); score -= bp; if (bp > 0) notes.push(`接地坡度 ${t.bank.toFixed(1)}°`);
+  let where = '';
+  if (rel) {
+    const xp = clamp((Math.abs(rel.xt) - 4) * 0.9, 0, 20); score -= xp; if (xp > 0) notes.push(`偏離中心線 ${Math.abs(rel.xt).toFixed(0)} 公尺`);
+    const dp = rel.al < 150 ? 15 : rel.al > 1000 ? clamp((rel.al - 1000) / 60, 0, 20) : 0; score -= dp; if (dp > 0) notes.push(`接地點距門檻 ${Math.round(rel.al)} 公尺（理想 150–1,000）`);
+    const [e, n] = FS.enu(rel.r.thrLat, rel.r.thrLon, S.lat, S.lon), h = rel.r.hdg * D2R, al = e * Math.sin(h) + n * Math.cos(h);
+    if (al > rel.r.len) { score -= 30; notes.push('衝出跑道末端'); }
+    where = `${rel.r.ap.name} 跑道 ${rel.r.id}`;
+    if (rel.r !== dst) { notes.push(`降落在 ${where}，不是目的地 ${dst.ap.name} 跑道 ${dst.id}`); score = Math.min(score, 60); }
+  } else { where = '跑道外'; score = Math.min(score, 40); notes.push('停在跑道範圍之外'); }
+  score = Math.round(clamp(score, 0, 100));
+  const grade = score >= 90 ? 'S' : score >= 80 ? 'A' : score >= 65 ? 'B' : score >= 50 ? 'C' : 'D';
+  const mins = Math.round(S.time * 1 / 60);
+  $('rtitle').textContent = `🛬 已降落：${where}　評分 ${score}（${grade}）`;
+  $('rbody').innerHTML = `飛行時間約 ${mins} 分鐘，剩餘燃油 ${Math.round(S.fuel).toLocaleString()} 公斤。<br>接地：下降率 <b>${Math.round(t.vsFpm)}</b> fpm、指示空速 <b>${Math.round(t.ias)}</b> 節、俯仰 ${t.pitch.toFixed(1)}°` +
+    (rel ? `、距門檻 <b>${Math.round(rel.al)}</b> 公尺、偏中心線 <b>${Math.abs(rel.xt).toFixed(0)}</b> 公尺` : '') + `。<br>` + (notes.length ? `可改進：<br>・${notes.join('<br>・')}` : '漂亮的降落！');
+  setTimeout(() => $('result').classList.remove('hide'), 1500);
+}
+
+/* ================= 相機與飛機位置 ================= */
+let camHdg = 0;
+function placeAircraftAndCamera() {
+  if (!viewer || !S) return;
+  if (![S.lat, S.lon, S.h, S.chi, S.theta, S.phi].every(isFinite)) { toast('飛行數值異常，已重置', 3000); spawn(); S.ap.rwy = mission.dst; return; }
+  const cam = viewer.camera, pos = ecef(S.lat, S.lon, S.h);
+  const ch = S.chi * D2R, th = S.theta, ph = S.phi;
+  if (planeModel) {
+    const hpr = new Cesium.HeadingPitchRoll(ch, th, ph);
+    planeModel.modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(pos, hpr);
+    planeModel.show = viewIdx !== 0;
+    const g = planeModel.getNode && planeModel.getNode('gear'); if (g) g.show = S.gear > 0.35;
+  }
+  const f = [Math.sin(ch) * Math.cos(th), Math.cos(ch) * Math.cos(th), Math.sin(th)];
+  const u = [-Math.sin(ch) * Math.sin(th), -Math.cos(ch) * Math.sin(th), Math.cos(th)];
+  if (viewIdx === 0) {
+    const p = enuToEcef(S.lat, S.lon, S.h, f[0] * 9.5 + u[0] * 0.9, f[1] * 9.5 + u[1] * 0.9, f[2] * 9.5 + u[2] * 0.9);
+    cam.setView({ destination: p, orientation: { heading: ch, pitch: th - 0.02, roll: ph } });
+  } else if (viewIdx === 1) {
+    camHdg += wrap180(S.chi - camHdg * R2D) * D2R * clamp(dt60() * 4, 0, 1); const hh = camHdg;
+    const fh = [Math.sin(hh), Math.cos(hh)];
+    const p = enuToEcef(S.lat, S.lon, S.h, -fh[0] * 46, -fh[1] * 46, 11 + Math.max(0, th) * 20);
+    cam.setView({ destination: p, orientation: { heading: hh, pitch: -0.16 + th * 0.5, roll: 0 } });
+  } else {
+    let a = AP_LIST[0], bd = 1e12; AP_LIST.forEach(x => { const d = FS.distance(S.lat, S.lon, x.lat, x.lon); if (d < bd) { bd = d; a = x; } });
+    const [cl, co] = FS.dest(a.lat, a.lon, 20, 350), ch0 = (mode === 'google' ? gndCacheAt(cl, co, a) : a.elevM) + 30;
+    const [e, n] = FS.enu(cl, co, S.lat, S.lon), dz = S.h - ch0;
+    cam.setView({ destination: ecef(cl, co, ch0), orientation: { heading: Math.atan2(e, n), pitch: Math.atan2(dz, Math.hypot(e, n)), roll: 0 } });
+    const dd = Math.hypot(e, n, dz); cam.frustum.fov = clamp(75 * D2R * (400 / Math.max(dd, 400)) + 0.06, 0.06, 1.3);
+    return;
+  }
+  cam.frustum.fov = 75 * D2R;
+}
+function gndCacheAt(la, lo, a) { return (gndOK && S.onGround ? gndCache : a.elevM + S.N); }
+let lastF = performance.now(); function dt60() { const n = performance.now(), d = (n - lastF) / 1000; lastF = n; return clamp(d, 0.001, 0.1); }
+
+/* ================= HUD ================= */
+const hud = $('hud'), hx = hud.getContext('2d'), mp = $('map'), mx = mp.getContext('2d');
+function sizeCanvas() { hud.width = Math.round(innerWidth * dpr); hud.height = Math.round(innerHeight * dpr); mp.width = Math.round(150 * dpr); mp.height = Math.round(260 * dpr); }
+addEventListener('error', e => showErr('程式錯誤', e.error || (e.message + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno))); addEventListener('unhandledrejection', e => showErr('程式錯誤', e.reason));
+addEventListener('resize', sizeCanvas); sizeCanvas();
+const GREEN = '#8bff9e', AMBER = '#ffcf5a', RED = '#ff5a5a', CYAN = '#6fd8ff', MAG = '#ff7aff';
+function derived() {
+  const hm = S.h - S.N, at = FS.atmos(hm), eas = S.V * Math.sqrt(at.rho / FS.RHO0);
+  const agl = Math.max(0, S.h - S.gndH - (S.gear > 0.85 ? FS.AC.cgGear : FS.AC.cgBelly));
+  return { ias: eas / KT, gs: S.V / KT, mach: S.V / at.a, altFt: hm / FT, aglFt: agl / FT, vs: (S.vz || 0) / FT * 60, hdg: S.chi };
+}
+function relDest() {
+  const r = mission.dst, [e, n] = FS.enu(r.thrLat, r.thrLon, S.lat, S.lon), h = r.hdg * D2R;
+  const along = e * Math.sin(h) + n * Math.cos(h), xtk = e * Math.cos(h) - n * Math.sin(h);
+  return { along, xtk, dist: FS.distance(S.lat, S.lon, r.thrLat, r.thrLon), brg: FS.bearing(S.lat, S.lon, r.thrLat, r.thrLon) };
+}
+function txt(s, x, y, size, color, align, bold) { hx.font = `${bold ? '700 ' : ''}${size}px ui-monospace,Menlo,Consolas,"Noto Sans TC",monospace`; hx.fillStyle = color || GREEN; hx.textAlign = align || 'left'; hx.fillText(s, x, y); }
+function drawHUD() {
+  const w = innerWidth, h = innerHeight; hx.setTransform(dpr, 0, 0, dpr, 0, 0); hx.clearRect(0, 0, w, h);
+  if (!showHud || !S) return;
+  const D = derived(), R = relDest(), ap = S.ap, cx = w / 2, cy = h / 2;
+  const sc = clamp(Math.min(w, h) / 720, 0.72, 1.25);
+  hx.save(); hx.shadowColor = 'rgba(0,0,0,.85)'; hx.shadowBlur = 4; hx.lineWidth = 1.6; hx.strokeStyle = GREEN;
+  const tapeH = 240 * sc, tx = cx - Math.min(w * 0.30, 330 * sc), ax = cx + Math.min(w * 0.30, 330 * sc);
+  // --- 速度帶 ---
+  hx.save(); hx.beginPath(); hx.rect(tx - 60, cy - tapeH / 2, 80, tapeH); hx.clip();
+  const pxk = 2.4 * sc; for (let v = Math.floor((D.ias - 60) / 10) * 10; v <= D.ias + 60; v += 10) { if (v < 0) continue; const y = cy - (v - D.ias) * pxk; hx.beginPath(); hx.moveTo(tx + 20, y); hx.lineTo(tx + (v % 50 === 0 ? 4 : 12), y); hx.stroke(); if (v % 20 === 0) txt(v, tx - 2, y + 5, 14 * sc, GREEN, 'right'); }
+  hx.restore();
+  const vsl = FS.vsStall(S, S.flapDeg, FS.RHO0) / KT * 1.0; // 1g 失速速度（海平面近似）
+  hx.strokeStyle = RED; hx.beginPath(); const ys = cy - (vsl * 1.0 - D.ias) * pxk; if (Math.abs(ys - cy) < tapeH / 2) { hx.moveTo(tx - 60, ys); hx.lineTo(tx + 20, ys); hx.stroke(); } hx.strokeStyle = GREEN;
+  hx.strokeRect(tx - 62, cy - 14 * sc, 64, 28 * sc); txt(Math.round(D.ias), tx - 6, cy + 7 * sc, 20 * sc, GREEN, 'right', true);
+  txt('IAS 節', tx - 30, cy - tapeH / 2 - 8, 12 * sc, GREEN, 'center'); txt('GS ' + Math.round(D.gs), tx - 30, cy + tapeH / 2 + 18, 13 * sc, GREEN, 'center'); txt('M ' + D.mach.toFixed(3).replace(/^0/, ''), tx - 30, cy + tapeH / 2 + 34, 13 * sc, GREEN, 'center');
+  if (ap.on && ap.at) { const ys2 = cy - (ap.spd - D.ias) * pxk; hx.strokeStyle = MAG; hx.beginPath(); hx.moveTo(tx + 22, clamp(ys2, cy - tapeH / 2, cy + tapeH / 2)); hx.lineTo(tx + 34, clamp(ys2, cy - tapeH / 2, cy + tapeH / 2) - 6); hx.lineTo(tx + 34, clamp(ys2, cy - tapeH / 2, cy + tapeH / 2) + 6); hx.closePath(); hx.stroke(); hx.strokeStyle = GREEN; }
+  // --- 高度帶 ---
+  hx.save(); hx.beginPath(); hx.rect(ax - 20, cy - tapeH / 2, 100, tapeH); hx.clip();
+  const pxa = 0.22 * sc; for (let v = Math.floor((D.altFt - 500) / 100) * 100; v <= D.altFt + 500; v += 100) { const y = cy - (v - D.altFt) * pxa * 1.0 * 1.0; hx.beginPath(); hx.moveTo(ax - 20, y); hx.lineTo(ax - (v % 500 === 0 ? 4 : 12), y); hx.stroke(); if (v % 200 === 0) txt(v.toLocaleString(), ax + 2, y + 5, 14 * sc, GREEN, 'left'); }
+  hx.restore();
+  hx.strokeRect(ax - 22, cy - 14 * sc, 86, 28 * sc); txt(Math.round(D.altFt).toLocaleString(), ax + 60, cy + 7 * sc, 19 * sc, GREEN, 'right', true);
+  txt('高度 呎', ax + 20, cy - tapeH / 2 - 8, 12 * sc, GREEN, 'center');
+  if (ap.on) { const ya = clamp(cy - (ap.alt / FT - D.altFt) * pxa, cy - tapeH / 2, cy + tapeH / 2); hx.strokeStyle = MAG; hx.beginPath(); hx.moveTo(ax - 22, ya); hx.lineTo(ax - 34, ya - 6); hx.lineTo(ax - 34, ya + 6); hx.closePath(); hx.stroke(); hx.strokeStyle = GREEN; }
+  txt((D.vs >= 0 ? '+' : '') + Math.round(D.vs / 10) * 10 + ' fpm', ax + 20, cy + tapeH / 2 + 18, 13 * sc, Math.abs(D.vs) > 3000 ? AMBER : GREEN, 'center');
+  if (D.aglFt < 2500) txt('RA ' + Math.round(D.aglFt), ax + 20, cy + tapeH / 2 + 34, 13 * sc, D.aglFt < 200 ? AMBER : GREEN, 'center');
+  // --- 航向帶 ---
+  const hw = Math.min(w * 0.36, 380 * sc), hy = 36 * sc + 12; hx.save(); hx.beginPath(); hx.rect(cx - hw / 2, hy - 28, hw, 44); hx.clip();
+  const pxh = 5.2 * sc; for (let a = Math.floor((D.hdg - 40) / 5) * 5; a <= D.hdg + 40; a += 5) { const x = cx + (a - D.hdg) * pxh, aa = wrap360(a); hx.beginPath(); hx.moveTo(x, hy); hx.lineTo(x, hy - (aa % 10 === 0 ? 10 : 5)); hx.stroke(); if (aa % 10 === 0) txt(aa === 0 ? 'N' : aa === 90 ? 'E' : aa === 180 ? 'S' : aa === 270 ? 'W' : String(aa / 10 | 0).padStart(2, '0'), x, hy + 13, 13 * sc, GREEN, 'center'); }
+  const mark = (ang, col, sh) => { const x = cx + wrap180(ang - D.hdg) * pxh; if (Math.abs(x - cx) > hw / 2 - 6) return; hx.strokeStyle = col; hx.beginPath(); if (sh === 'd') { hx.moveTo(x, hy - 16); hx.lineTo(x + 6, hy - 9); hx.lineTo(x, hy - 2); hx.lineTo(x - 6, hy - 9); hx.closePath(); } else { hx.moveTo(x - 6, hy - 14); hx.lineTo(x + 6, hy - 14); hx.lineTo(x, hy - 4); hx.closePath(); } hx.stroke(); };
+  mark(R.brg, CYAN, 'd'); if (ap.on && (ap.lat === 'HDG')) mark(ap.hdg, MAG, 't');
+  hx.restore(); hx.strokeStyle = GREEN; hx.beginPath(); hx.moveTo(cx, hy + 4); hx.lineTo(cx - 5, hy + 12); hx.lineTo(cx + 5, hy + 12); hx.closePath(); hx.stroke();
+  txt(String(Math.round(D.hdg) % 360 || 360).padStart(3, '0') + '°', cx, hy - 32 + 2, 16 * sc, GREEN, 'center', true);
+  // --- 座艙視角的俯仰刻度與飛行路徑向量 ---
+  if (viewIdx === 0) {
+    const fovy = viewer.camera.frustum.fovy || (75 * D2R * h / w), f = (h / 2) / Math.tan(fovy / 2);
+    hx.save(); hx.translate(cx, cy); hx.rotate(-S.phi);
+    hx.beginPath(); hx.rect(-w, -h, 2 * w, 2 * h); hx.clip();
+    for (let a = -30; a <= 30; a += 5) {
+      const y = -f * Math.tan((a * D2R) - S.theta + 0.02); if (Math.abs(y) > h * 0.42) continue; const hwid = a === 0 ? 150 * sc : 44 * sc;
+      hx.beginPath(); if (a === 0) { hx.moveTo(-hwid, y); hx.lineTo(-24 * sc, y); hx.moveTo(24 * sc, y); hx.lineTo(hwid, y); } else if (a > 0) { hx.moveTo(-hwid, y + 6); hx.lineTo(-hwid, y); hx.lineTo(-hwid / 3, y); hx.moveTo(hwid / 3, y); hx.lineTo(hwid, y); hx.lineTo(hwid, y + 6); } else { hx.setLineDash([6, 5]); hx.moveTo(-hwid, y - 6); hx.lineTo(-hwid, y); hx.lineTo(-hwid / 3, y); hx.moveTo(hwid / 3, y); hx.lineTo(hwid, y); hx.lineTo(hwid, y - 6); }
+      hx.stroke(); hx.setLineDash([]); if (a !== 0) { txt(Math.abs(a), -hwid - 6, y + 4, 11 * sc, GREEN, 'right'); txt(Math.abs(a), hwid + 6, y + 4, 11 * sc, GREEN, 'left'); }
+    }
+    hx.restore();
+    if (D.gs > 5) { const fy = cy - f * Math.tan(S.gam - S.theta + 0.02) * 1; hx.save(); hx.translate(cx, cy); hx.rotate(-S.phi); hx.translate(0, fy - cy); hx.beginPath(); hx.arc(0, 0, 8 * sc, 0, 7); hx.moveTo(-22 * sc, 0); hx.lineTo(-8 * sc, 0); hx.moveTo(8 * sc, 0); hx.lineTo(22 * sc, 0); hx.moveTo(0, -8 * sc); hx.lineTo(0, -16 * sc); hx.stroke(); hx.restore(); }
+    // 目的地跑道標記（螢幕投影）
+    try {
+      const dp = ecef(mission.dst.thrLat, mission.dst.thrLon, (mission.dst.elevHAE != null ? mission.dst.elevHAE : mission.dst.elevM + S.N) + 2);
+      const sp = Cesium.SceneTransforms.worldToWindowCoordinates(viewer.scene, dp);
+      if (sp && R.dist > 800 && sp.x > 10 && sp.x < w - 10 && sp.y > 10 && sp.y < h - 10) { hx.strokeStyle = CYAN; hx.strokeRect(sp.x - 9, sp.y - 9, 18, 18); txt(mission.dst.ap.code + ' ' + mission.dst.id + '  ' + (R.dist / 1000).toFixed(1) + ' 公里', sp.x, sp.y - 16, 12 * sc, CYAN, 'center'); hx.strokeStyle = GREEN; }
+    } catch (e) { }
+  }
+  hx.restore();
+  // --- 左上：任務資訊 ---
+  hx.save(); hx.shadowColor = 'rgba(0,0,0,.9)'; hx.shadowBlur = 4;
+  let y0 = 20, lh = 17 * sc, ts = 13 * sc;
+  txt(`${mission.dep.ap.code} ${mission.dep.id} → ${mission.dst.ap.code} ${mission.dst.id}`, 12, y0, 14 * sc, CYAN, 'left', true); y0 += lh;
+  const etaMin = D.gs > 40 ? R.dist / (D.gs * KT) / 60 : 0;
+  txt(`距離 ${(R.dist / 1000).toFixed(1)} 公里　方位 ${String(Math.round(R.brg)).padStart(3, '0')}°`, 12, y0, ts, GREEN); y0 += lh;
+  if (D.gs > 40) { txt(`預計 ${etaMin < 1 ? '< 1' : Math.round(etaMin)} 分鐘後抵達`, 12, y0, ts, GREEN); y0 += lh; }
+  const am = ap.on ? `AP ${ap.auto ? 'AUTO' : ''} ${ap.lat}${ap.lat === 'HDG' ? ' ' + Math.round(ap.hdg) : ''} / ${ap.vmode || ap.vert} ${ap.vert === 'GS' ? (ap.status || '') : Math.round(ap.alt / FT).toLocaleString() + ' 呎'}${ap.at ? ' / A/T ' + Math.round(ap.spd) : ''}` : 'AP 關閉';
+  txt(am, 12, y0, ts, ap.on ? MAG : '#8aa', 'left'); y0 += lh;
+  const stage = ap.auto ? ({ CLIMB: '爬升／巡航', DESC: '下降', APPR: '進場', LAND: '降落' }[ap.stage] || '') : ''; if (stage) { txt('階段：' + stage + (ap.status ? '（' + ap.status + '）' : ''), 12, y0, ts, MAG); y0 += lh; }
+  hx.restore();
+  // --- 左下：系統狀態 ---
+  hx.save(); hx.shadowColor = 'rgba(0,0,0,.9)'; hx.shadowBlur = 4;
+  const bx = 12, by = h - 18 - (isTouch ? 0 : 0); const ls = 15 * sc;
+  const line = (i, s, c) => txt(s, bx, by - i * ls, 12.5 * sc, c || GREEN);
+  line(0, `燃油 ${Math.round(S.fuel).toLocaleString()} 公斤`, S.fuel < 600 ? RED : GREEN);
+  line(1, `起落架 ${S.gear > 0.97 ? '放下' : S.gear < 0.03 ? '收起' : '移動中'}　襟翼 ${Math.round(S.flapDeg)}°　減速板 ${S.spoil > 0.5 ? '開' : '關'}`, GREEN);
+  line(2, `推力 ${Math.round(S.thr * 100)}%${S.rev > 0.1 ? '　反推' : ''}${inp.brake ? '　煞車' : ''}　時間 ×${timeScale}`, GREEN);
+  line(3, `視角：${VIEWS[viewIdx]}　${mode === 'google' ? 'Google 3D' : '簡易地球'}${inp.assist ? '　穩定輔助' : ''}`, '#8fb0cc');
+  hx.restore();
+  // --- 姿態儀（右下）---
+  drawAttitude(w - 100 * sc - 14, h - 100 * sc - (isTouch ? 190 : 26), 80 * sc, D, R, sc);
+  // --- 警告 ---
+  let warn = null;
+  if (S.stalled) warn = ['失速 STALL', RED]; else if (D.ias > 335 || D.mach > 0.925) warn = ['超速 OVERSPEED', RED];
+  else if (!S.onGround && D.aglFt < 400 && D.vs < -1800) warn = ['拉起 PULL UP', RED];
+  else if (!S.onGround && S.gear < 0.9 && D.aglFt < 800 && D.ias < 190 && S.thr < 0.75 && D.vs < 0) warn = ['起落架！ GEAR', AMBER];
+  else if (S.fuelOut) warn = ['燃油耗盡', RED];
+  if (warn && (performance.now() % 700 < 450)) { hx.save(); hx.shadowColor = '#000'; hx.shadowBlur = 6; txt(warn[0], cx, cy + 130 * sc, 30 * sc, warn[1], 'center', true); hx.restore(); }
+  if (paused) txt('暫停中', cx, cy - 120, 30, AMBER, 'center', true);
+}
+function drawAttitude(x, y, r, D, R, sc) {
+  hx.save(); hx.translate(x, y); hx.beginPath(); hx.arc(0, 0, r, 0, 7); hx.clip();
+  hx.rotate(-S.phi); const py = S.theta * R2D * (r / 28);
+  hx.fillStyle = '#2a6fb5'; hx.fillRect(-r * 2, -r * 2 + py, r * 4, r * 2); hx.fillStyle = '#7a5530'; hx.fillRect(-r * 2, py, r * 4, r * 2);
+  hx.strokeStyle = '#fff'; hx.lineWidth = 1.5; hx.beginPath(); hx.moveTo(-r, py); hx.lineTo(r, py); hx.stroke();
+  for (let a = -20; a <= 20; a += 10) { if (!a) continue; const yy = py - a * (r / 28), ww = Math.abs(a) === 10 ? r * 0.34 : r * 0.5; hx.beginPath(); hx.moveTo(-ww, yy); hx.lineTo(ww, yy); hx.stroke(); }
+  hx.restore(); hx.save(); hx.translate(x, y); hx.shadowColor = 'rgba(0,0,0,.8)'; hx.shadowBlur = 3; hx.strokeStyle = '#fff'; hx.lineWidth = 2; hx.beginPath(); hx.arc(0, 0, r, 0, 7); hx.stroke();
+  hx.strokeStyle = AMBER; hx.lineWidth = 3; hx.beginPath(); hx.moveTo(-r * 0.55, 0); hx.lineTo(-r * 0.2, 0); hx.lineTo(-r * 0.2, 5); hx.moveTo(r * 0.55, 0); hx.lineTo(r * 0.2, 0); hx.lineTo(r * 0.2, 5); hx.stroke(); hx.fillStyle = AMBER; hx.fillRect(-2, -2, 4, 4);
+  // ILS 指針
+  const along = R.along, dist = -along, off = Math.abs(wrap180(S.chi - mission.dst.hdg));
+  if (dist > 300 && dist < 45000 && off < 50 && R.dist < 45000) {
+    const locDev = clamp(Math.atan2(R.xtk, dist) * R2D / 2.5, -1, 1);
+    const rwH = mission.dst.elevHAE != null ? mission.dst.elevHAE : mission.dst.elevM + S.N;
+    const gsDevDeg = Math.atan2(S.h - rwH - 15, dist) * R2D - 3; const gsDev = clamp(gsDevDeg / 0.7, -1, 1);
+    hx.strokeStyle = MAG; hx.lineWidth = 2.5;
+    hx.beginPath(); hx.moveTo(-locDev * r * 0.8 * -1 * -1, -r * 0.5); hx.lineTo(-locDev * r * 0.8 * -1 * -1, r * 0.5); hx.stroke();
+    hx.beginPath(); hx.moveTo(-r * 0.5, gsDev * r * 0.8); hx.lineTo(r * 0.5, gsDev * r * 0.8); hx.stroke();
+    hx.fillStyle = 'rgba(0,0,0,.5)'; hx.font = '10px sans-serif'; hx.textAlign = 'center'; hx.fillStyle = MAG; hx.fillText('LOC/GS 示意', 0, r + 14);
+  }
+  hx.restore();
+}
+function drawMap() {
+  if (!showMap || !S) return;
+  const W = 150, H = 260; mx.setTransform(dpr, 0, 0, dpr, 0, 0); mx.clearRect(0, 0, W, H);
+  const LAT0 = 25.5, LAT1 = 22.0, LON0 = 119.9, LON1 = 122.1;
+  const X = lo => (lo - LON0) / (LON1 - LON0) * W, Y = la => (LAT0 - la) / (LAT0 - LAT1) * H;
+  const isl = [[121.54, 25.30], [121.75, 25.12], [121.95, 24.88], [121.88, 24.60], [121.62, 24.05], [121.50, 23.50], [121.37, 23.05], [121.15, 22.75], [120.88, 22.30], [120.85, 21.95], [120.70, 22.02], [120.60, 22.35], [120.27, 22.60], [120.12, 23.00], [120.12, 23.50], [120.30, 23.90], [120.50, 24.25], [120.75, 24.55], [120.92, 24.85], [121.05, 25.05], [121.40, 25.18]];
+  mx.beginPath(); isl.forEach((p, i) => i ? mx.lineTo(X(p[0]), Y(p[1])) : mx.moveTo(X(p[0]), Y(p[1]))); mx.closePath(); mx.fillStyle = 'rgba(70,110,70,.55)'; mx.fill(); mx.strokeStyle = 'rgba(160,220,160,.6)'; mx.lineWidth = 1; mx.stroke();
+  mx.strokeStyle = 'rgba(111,216,255,.8)'; mx.setLineDash([4, 3]); mx.beginPath(); mx.moveTo(X(mission.dep.thrLon), Y(mission.dep.thrLat)); mx.lineTo(X(mission.dst.thrLon), Y(mission.dst.thrLat)); mx.stroke(); mx.setLineDash([]);
+  mx.font = '10px sans-serif'; AP_LIST.forEach(a => { const isD = a === mission.dst.ap; mx.fillStyle = isD ? CYAN : '#cde'; mx.beginPath(); mx.arc(X(a.lon), Y(a.lat), isD ? 4 : 3, 0, 7); mx.fill(); mx.textAlign = a.lon > 121 ? 'right' : 'left'; mx.fillText(a.iata, X(a.lon) + (a.lon > 121 ? -6 : 6), Y(a.lat) + 3); });
+  mx.fillStyle = 'rgba(255,255,255,.35)'; trail.forEach(p => mx.fillRect(X(p[1]) - 1, Y(p[0]) - 1, 2, 2));
+  mx.save(); mx.translate(X(S.lon), Y(S.lat)); mx.rotate(S.chi * D2R); mx.fillStyle = '#ffd24a'; mx.beginPath(); mx.moveTo(0, -7); mx.lineTo(5, 6); mx.lineTo(0, 3); mx.lineTo(-5, 6); mx.closePath(); mx.fill(); mx.restore();
+  mx.fillStyle = '#9fb'; mx.textAlign = 'left'; mx.fillText('北↑ 示意圖', 4, 12);
+}
+
+/* ================= 流程控制 ================= */
+async function start() {
+  initAudio(); if (actx && actx.state === 'suspended') actx.resume();
+  const key = $('gkey').value.trim(); LS('fs_gkey', key); LS('fs_q', $('qual').value);
+  inp.assist = $('assist').checked; inp.sprot = $('sprot').checked; inp.invp = $('invp').checked;
+  $('menu').classList.add('hide'); $('result').classList.add('hide'); $('load').classList.remove('hide');
+  $('loadt').textContent = key ? '連線 Google 3D 地圖…' : '準備簡易地球…'; $('loadd').textContent = key ? '正在向 Google 要求 3D 圖磚，請稍候。' : '未提供金鑰，使用簡易地球與合成跑道。';
+  running = false;
+  try { await ensureCesium(); await initViewer(key, +$('qual').value); } catch (err) { console.error(err); $('load').classList.add('hide'); $('menu').classList.remove('hide'); $('gstat').textContent = '初始化失敗：' + err.message; alert('初始化失敗：' + err.message); return; }
+  dbg('initViewer 完成 mode=' + mode); gndOK = false; spawn(); dbg('spawn 完成');
+  // Google 模式：先把鏡頭放到起點等圖磚載入並取得地面高度
+  if (mode === 'google') {
+    viewer.camera.setView({ destination: ecef(S.lat, S.lon, S.h + 80), orientation: { heading: S.chi * D2R, pitch: -0.35, roll: 0 } });
+    $('loadd').textContent = '正在載入起飛機場周邊 3D 圖磚…';
+    const t0 = performance.now();
+    await new Promise(res => {
+      const chk = () => { sampleGround(S.lat, S.lon); const loaded = tileset && tileset.tilesLoaded; if ((gndOK && loaded) || performance.now() - t0 > 25000) res(); else setTimeout(chk, 300); };
+      chk();
+    });
+    if (gndOK) { S.h = gndCache + FS.AC.cgGear; S.gndH = gndCache; mission.dep.elevHAE = gndCache; } else toast('未能取得地面高度，改用機場標高估算。', 4000);
+  }
+  S.ap.rwy = mission.dst; viewIdx = 0; camHdg = S.chi * D2R; lastT = 0;
+  dbg('開始飛行'); setTimeout(() => checkWorld('3秒'), 3000); setTimeout(() => checkWorld('8秒'), 8000); $('load').classList.add('hide'); $('pausebtn').style.display = 'block'; running = true; paused = false;
+  toast('油門推到底（按住 W）→ 達 150 節左右輕拉機頭離地；起飛後收起落架與襟翼。', 6000);
+}
+
+function checkWorld(tag) {
+  try {
+    const g = viewer.scene.globe, sf = g._surface, n = sf && sf._tilesToRender ? sf._tilesToRender.length : -1;
+    const cp = viewer.camera.positionCartographic;
+    const url = Cesium.buildModuleUrl('Workers/createVerticesFromHeightmap.js');
+    dbg(`[${tag}] 地面圖磚=${n} tilesLoaded=${g.tilesLoaded} 圖層=${viewer.imageryLayers.length} 相機高=${cp ? cp.height.toFixed(1) : '?'} webgl2=${viewer.scene.context.webgl2} 圖元=${viewer.scene.primitives.length} 實體=${viewer.entities.values.length}`);
+    fetch(url, { mode: 'cors' }).then(r => dbg('Worker 檔 ' + r.status + ' ' + url.slice(0, 70))).catch(e => dbg('Worker 檔取得失敗 ' + e.message));
+    if (n === 0 && mode !== 'google') setTimeout(() => showErr('診斷：地面沒有產生', '地面圖磚數為 0'), 800);
+  } catch (e) { dbg('checkWorld 失敗 ' + e.message); }
+}
+function toggleMenu() {
+  if (!viewer) return;
+  const m = $('menu');
+  if (m.classList.contains('hide')) { m.classList.remove('hide'); paused = true; $('resume').style.display = running ? 'inline-block' : 'none'; }
+  else if (running) { m.classList.add('hide'); paused = false; }
+}
+$('go').onclick = start;
+$('resume').onclick = () => { $('menu').classList.add('hide'); paused = false; };
+$('pausebtn').onclick = toggleMenu;
+$('again').onclick = () => { $('result').classList.add('hide'); start(); };
+$('tomenu').onclick = () => { $('result').classList.add('hide'); running = false; $('resume').style.display = 'none'; $('menu').classList.remove('hide'); };
+$('safechk').checked = SAFE; $('safechk').onchange = () => { LS('fs_safe', $('safechk').checked ? '1' : '0'); location.reload(); };
+$('gstat').textContent = isTouch ? '偵測到觸控裝置：已啟用螢幕搖桿。' : '';
+window.__fs = { get S() { return S; }, get mission() { return mission; }, ENV, inp, keys, start, get viewer() { return viewer; }, get mode() { return mode; }, get flags() { return flags; }, onKey, get paused() { return paused; }, set viewIdx(v) { viewIdx = v; }, step: () => 0 };
+})();
+
+</script>
+</body>
+</html>
