@@ -19,41 +19,63 @@ h1 small{font-size:13px;font-weight:400;opacity:.7;margin-left:6px}
 button,select{font:inherit;border:0;border-radius:8px;padding:7px 14px;background:#e8b93a;color:#2a1e00;font-weight:700;cursor:pointer}
 button.alt,select{background:var(--altbg);color:var(--altfg)}
 button:disabled{opacity:.4;cursor:not-allowed}
-:root{--bs:min(calc(100dvh - 76px),calc(100vw - 380px))}
-#stage{display:flex;gap:16px;justify-content:center;align-items:center}
+:root{--bs:min(calc(100dvh - 76px),calc(100vw - 450px))}
+body.learn{--bs:min(calc(100dvh - 76px),calc(100vw - 690px))}
+#stage{display:flex;gap:16px;justify-content:center;align-items:flex-start}
 #cv{width:var(--bs);height:var(--bs);border-radius:10px;box-shadow:0 6px 24px #0007;touch-action:manipulation;cursor:pointer;flex:none}
-#panel{width:340px;max-width:100%;background:var(--panel);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
-#status{font-size:18px;font-weight:700;min-height:2.6em;display:flex;align-items:center}
+#panel{width:390px;max-width:100%;flex:none;background:var(--panel);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;font-size:17px}
+#status{font-size:23px;font-weight:800;min-height:2.6em;display:flex;align-items:center}
 .pl{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:var(--tag);border:2px solid transparent}
 .pl.turn{border-color:#e8b93a}
-.pl span{font-weight:700}.pl em{margin-left:auto;font-style:normal;font-size:13px;opacity:.8}
-.dot{width:20px;height:20px;border-radius:50%;flex:none}
+.pl{font-size:18px}.pl span{font-weight:700}.pl em{margin-left:auto;font-style:normal;font-size:15px;opacity:.85}
+.dot{width:24px;height:24px;border-radius:50%;flex:none}
 .dot.b{background:radial-gradient(circle at 35% 30%,#666,#000)}
 .dot.w{background:radial-gradient(circle at 35% 30%,#fff,#ccc);border:1px solid #999}
 .row{display:flex;gap:8px;flex-wrap:wrap}
-.row label{font-size:13px;opacity:.85;display:flex;flex-direction:column;gap:3px;flex:1}
-.row select{width:100%}
-.stat{font-size:14px;text-align:center;opacity:.9}
-.rule{font-size:12.5px;line-height:1.6;opacity:.8}
+.row label{font-size:16px;opacity:.9;display:flex;flex-direction:column;gap:4px;flex:1}
+.row select{width:100%;font-size:17px;padding:8px 10px}
+.stat{font-size:16px;text-align:center;opacity:.95;line-height:1.5}
+.rule{font-size:15px;line-height:1.65;opacity:.85}
+#learn{display:none;flex-direction:column;gap:10px;width:220px;flex:none}
+body.learn #learn{display:flex}
+.lt{font-size:15px;font-weight:800;text-align:center}
+.card{background:var(--panel);border-radius:12px;padding:8px;text-align:center}
+.card canvas{width:104px;height:104px;display:block;margin:0 auto 4px;border-radius:6px}
+.card b{font-size:17px}.card small{display:block;font-size:12.5px;line-height:1.4;opacity:.85}
+#banner{position:fixed;z-index:90;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;display:none}
+#banner.show{display:block}
+#banner .bn{font-weight:900;white-space:nowrap;padding:.28em .8em;border-radius:.45em;border:.07em solid #f2c230;text-align:center;line-height:1.25;box-shadow:0 8px 40px #000a,0 0 60px #f2c23088;animation:pop .75s cubic-bezier(.2,1.6,.4,1) both,fade .5s 2.7s forwards}
+#banner .bn small{display:block;font-size:.34em;font-weight:700;opacity:.85}
+#banner.blk .bn{background:#111;color:#fff}
+#banner.wht .bn{background:#fafafa;color:#111}
+#banner.draw .bn{background:#355;color:#fff}
+#banner i{position:absolute;left:50%;top:50%;width:.16em;height:.16em;border-radius:2px;animation:fly 1.7s ease-out both}
+@keyframes pop{0%{transform:scale(0) rotate(-12deg);opacity:0}60%{transform:scale(1.25) rotate(3deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes fade{to{opacity:0;transform:scale(1.1)}}
+@keyframes fly{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
 #modal{position:fixed;z-index:100;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:12px}
 #modal.on{display:flex}
 .box{background:var(--panel);color:var(--fg);border-radius:16px;padding:18px;max-width:360px;width:100%}
 .box input{width:100%;font:inherit;padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
 @media(max-aspect-ratio:1/1){
-  :root{--bs:min(96vw,calc(100dvh - 330px))}
-  #stage{flex-direction:column;gap:10px}
-  #panel{width:min(96vw,560px)}
+  :root,body.learn{--bs:min(96vw,calc(100dvh - 360px))}
+  body.learn{--bs:min(96vw,calc(100dvh - 520px))}
+  #stage{flex-direction:column;align-items:center;gap:10px}
+  #panel{width:min(96vw,560px);transform:none!important}
+  #learn{flex-direction:row;width:min(96vw,560px)}.lt{display:none}
+  .card{flex:1;padding:4px}.card canvas{width:100%;height:auto;aspect-ratio:1}.card small{font-size:11px}
 }
-@media(max-height:560px) and (min-aspect-ratio:1/1){:root{--bs:min(calc(100dvh - 56px),calc(100vw - 380px))}h1 small{display:none}}
+@media(max-height:560px) and (min-aspect-ratio:1/1){:root{--bs:min(calc(100dvh - 56px),calc(100vw - 450px))}body.learn{--bs:min(calc(100dvh - 56px),calc(100vw - 690px))}h1 small{display:none}}
 </style>
 </head>
 <body>
 <div id="app">
 <header>
   <h1>五子棋<small>Gomoku</small></h1>
-  <div><button class="alt" id="undoBtn">悔棋</button> <button class="alt" id="nameBtn">更改名稱</button> <button class="alt" id="themeBtn">外觀：自動</button> <button id="newBtn">重新開始</button></div>
+  <div id="hdrBtns"><button class="alt" id="undoBtn">悔棋</button> <button class="alt" id="nameBtn">更改名稱</button> <button class="alt" id="themeBtn">外觀：自動</button> <button id="newBtn">重新開始</button></div>
 </header>
 <div id="stage">
+  <div id="learn"></div>
   <canvas id="cv"></canvas>
   <div id="panel">
     <div id="status"></div>
@@ -61,19 +83,84 @@ button:disabled{opacity:.4;cursor:not-allowed}
     <div class="pl" id="p1"><i class="dot w" id="d1"></i><span id="n1">電腦</span><em id="r1"></em></div>
     <div class="row">
       <label>執子<select id="side"><option value="B">執黑（先手）</option><option value="W">執白（後手）</option></select></label>
-      <label>難度<select id="level"><option value="easy">簡單</option><option value="normal" selected>普通</option><option value="hard">困難</option></select></label>
+      <label>難度<select id="level"><option value="easy">簡單</option><option value="normal" selected>普通</option><option value="hard">困難</option><option value="learn">學習</option></select></label>
     </div>
     <div class="stat" id="stat"></div>
     <div class="rule">規則：15×15 棋盤，黑子先下。橫、直、斜任一方向連成五子（含以上）即獲勝；盤面下滿則和局。無禁手。</div>
   </div>
 </div>
 </div>
+<div id="banner"></div>
 <div id="modal"><div class="box" id="mbox"></div></div>
 
 <script>
 const N=15;
 const DIRS=[[0,1],[1,0],[1,1],[1,-1]];
 const DEF=['你','電腦'];
+/* 連珠起手式（黑1＝H8 天元；白2；黑3）。座標 [row,col]，row 由上往下、col 由左往右 */
+const OPENINGS=[
+ {n:'寒星',t:'直接 1',c:'H8・H9・H10',s:[[7,7],[6,7],[5,7]],d:'黑第三子隔著白子，與天元同在一條直線上。'},
+ {n:'溪月',t:'直接 2',c:'H8・H9・I10',s:[[7,7],[6,7],[5,8]],d:'黑第三子落在白子斜上方，緊貼白子。'},
+ {n:'疏星',t:'直接 3',c:'H8・H9・J10',s:[[7,7],[6,7],[5,9]],d:'黑第三子與天元同在斜線上，中間隔一格空位。'},
+ {n:'長星',t:'間接 1',c:'H8・I9・J10',s:[[7,7],[6,8],[5,9]],d:'三子同在一條斜線上，白子夾在黑子中間。'},
+ {n:'峽月',t:'間接 2',c:'H8・I9・J9',s:[[7,7],[6,8],[6,9]],d:'黑第三子緊貼白子右側，與白子並排。'},
+ {n:'恆星',t:'間接 3',c:'H8・I9・J8',s:[[7,7],[6,8],[7,9]],d:'黑第三子與天元同在橫線上，中間隔一格空位。'}
+];
+let OPS=[];
+function rollOps(){const a=OPENINGS.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}OPS=a.slice(0,3);}
+function renderLearn(){
+  const box=$('learn');if(!box||G.level!=='learn')return;
+  if(!OPS.length)rollOps();
+  box.innerHTML='<div class="lt">📖 隨機三種起手式</div>'+OPS.map((o,i)=>`<div class="card"><canvas id="oc${i}" width="256" height="256"></canvas><b>${o.n}</b>（${o.t}）<small>${o.c}<br>${o.d}</small></div>`).join('');
+  OPS.forEach((o,i)=>drawOpening($('oc'+i),o));
+}
+function drawOpening(c,o){
+  const g=c.getContext('2d'),W=c.width,n=5,r0=4,c0=6,m=W/n;
+  g.fillStyle='#deb667';g.fillRect(0,0,W,W);
+  g.strokeStyle='#5a3b12';g.lineWidth=2;g.beginPath();
+  for(let i=0;i<n;i++){const p=m*(i+.5);g.moveTo(m*.5,p);g.lineTo(W-m*.5,p);g.moveTo(p,m*.5);g.lineTo(p,W-m*.5);}
+  g.stroke();
+  o.s.forEach(([r,cc],k)=>{
+    const x=m*(cc-c0+.5),y=m*(r-r0+.5),R=m*.42,white=k===1;
+    const rg=g.createRadialGradient(x-R*.35,y-R*.35,R*.1,x,y,R);
+    if(white){rg.addColorStop(0,'#fff');rg.addColorStop(1,'#cfcfcf');}else{rg.addColorStop(0,'#777');rg.addColorStop(1,'#000');}
+    g.fillStyle=rg;g.beginPath();g.arc(x,y,R,0,7);g.fill();
+    if(white){g.strokeStyle='#999';g.lineWidth=1.5;g.stroke();}
+    g.fillStyle=white?'#111':'#fff';g.font='bold '+Math.round(m*.42)+'px system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';
+    g.fillText(String(k+1),x,y+1);
+  });
+}
+function applyLevelUI(){
+  document.body.classList.toggle('learn',G.level==='learn');
+  if(G.level==='learn')renderLearn();
+  layoutPanel();draw();
+}
+/* 設定框：頂端與棋盤上緣對齊；水平置中於上方四個按鈕 */
+function layoutPanel(){
+  const p=$('panel'),b=$('hdrBtns');if(!p||!b)return;
+  p.style.transform='';
+  if(window.innerWidth<=window.innerHeight)return;
+  const pr=p.getBoundingClientRect(),br=b.getBoundingClientRect(),cr=cv.getBoundingClientRect();
+  let dx=(br.left+br.width/2)-(pr.left+pr.width/2);
+  dx=Math.min(dx,window.innerWidth-8-pr.right);
+  dx=Math.max(dx,cr.right+12-pr.left);
+  p.style.transform='translateX('+Math.round(dx)+'px)';
+}
+let BT=0;
+function showBanner(){
+  const b=$('banner');if(!b||!cv)return;
+  const rc=cv.getBoundingClientRect();
+  b.style.left=(rc.left+rc.width/2)+'px';b.style.top=(rc.top+rc.height/2)+'px';b.style.fontSize=Math.max(30,rc.width*.12)+'px';
+  let txt,cls,sub='';
+  if(G.result==='draw'){txt='和局！';cls='draw';}
+  else{const p=G.moves[G.moves.length-1].p;txt=(p==='B'?'黑':'白')+'棋勝！';cls=p==='B'?'blk':'wht';sub=`<small>${p===G.human?NAMES[0]:NAMES[1]}獲勝</small>`;}
+  const cols=['#f2c230','#ff5a5a','#5ad2ff','#7dff9b','#ff9bf0','#fff'];
+  let cf='';
+  for(let i=0;i<36;i++){const a=Math.random()*6.283,d=2.5+Math.random()*4;cf+=`<i style="background:${cols[i%cols.length]};--dx:${(Math.cos(a)*d).toFixed(2)}em;--dy:${(Math.sin(a)*d-.6).toFixed(2)}em;--rot:${Math.round(Math.random()*720-360)}deg;animation-delay:${(Math.random()*.25).toFixed(2)}s"></i>`;}
+  b.className='show '+cls;b.innerHTML=`<div class="bn">${txt}${sub}</div>${cf}`;
+  clearTimeout(BT);BT=setTimeout(()=>{b.className='';},3300);
+}
+function hideBanner(){clearTimeout(BT);const b=$('banner');if(b)b.className='';}
 let NAMES=DEF.slice();
 let G=null,GID=0;
 
@@ -169,10 +256,10 @@ function checkWin(b,r,c){
 
 /* ---------- 遊戲流程 ---------- */
 function newGame(){
-  GID++;
+  GID++;hideBanner();if(G&&G.level==='learn')rollOps();
   const side=G?G.human:'B';
   G={board:new Array(N*N).fill(0),moves:[],turn:'B',human:side,over:false,win:null,level:G?G.level:'normal',hover:null,thinking:false,result:null,stats:G?G.stats:loadStats()};
-  render();
+  render();applyLevelUI();
   if(G.human==='W')aiTurn();
 }
 function loadStats(){try{return JSON.parse(localStorage.getItem('gomoku_stats'))||{w:0,l:0,d:0};}catch(e){return {w:0,l:0,d:0};}}
@@ -195,7 +282,7 @@ function aiTurn(){
   const id=GID;
   setTimeout(()=>{
     if(id!==GID)return;
-    const [r,c]=aiMove(G.board,G.turn,G.level);
+    const [r,c]=aiMove(G.board,G.turn,G.level==='learn'?'normal':G.level);
     place(r,c);G.thinking=false;render();
   },380);
 }
@@ -209,7 +296,7 @@ function undo(){
     const m=G.moves.pop();G.board[m.r*N+m.c]=0;
     if(m.p===G.human)break;
   }
-  G.over=false;G.win=null;G.result=null;G.turn=G.human;
+  G.over=false;G.win=null;G.result=null;G.turn=G.human;G.bannerShown=false;hideBanner();
   render();
 }
 
@@ -234,6 +321,7 @@ function render(){
   $('undoBtn').disabled=g.thinking||!g.moves.some(m=>m.p===g.human);
   $('side').value=g.human;$('level').value=g.level;
   draw();
+  if(g.over&&!g.bannerShown){g.bannerShown=true;showBanner();}
 }
 function draw(){
   if(!cv)return;
@@ -290,11 +378,11 @@ function init(){
   cv.addEventListener('pointermove',e=>{if(!G)return;const c=cellAt(e);const h=G.hover;G.hover=c;if(!h!==!c||(h&&c&&(h[0]!==c[0]||h[1]!==c[1])))draw();});
   cv.addEventListener('pointerleave',()=>{G.hover=null;draw();});
   cv.addEventListener('pointerdown',e=>{const c=cellAt(e);if(c)humanPlay(c[0],c[1]);});
-  window.addEventListener('resize',draw);
+  window.addEventListener('resize',()=>{layoutPanel();draw();});window.addEventListener('load',layoutPanel);
   $('undoBtn').onclick=undo;
   $('newBtn').onclick=()=>{if(!G.moves.length||G.over||confirm('確定要重新開始這一局嗎？'))newGame();};
   $('side').onchange=e=>{G.human=e.target.value;newGame();};
-  $('level').onchange=e=>{G.level=e.target.value;};
+  $('level').onchange=e=>{G.level=e.target.value;if(G.level==='learn')rollOps();applyLevelUI();};
   $('themeBtn').onclick=()=>{THEME={auto:'light',light:'dark',dark:'auto'}[THEME];try{localStorage.setItem('gomoku_theme',THEME);}catch(e){}applyTheme();};
   $('nameBtn').onclick=()=>{
     const pos=['你的名稱','對手（電腦）的名稱'];
@@ -307,7 +395,7 @@ function init(){
       $('modal').className='';render();
     };
   };
-  applyTheme();newGame();
+  applyTheme();newGame();layoutPanel();
 }
 if(typeof window!=='undefined'&&!window.__TEST__)init();
 </script>
