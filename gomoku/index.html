@@ -34,7 +34,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 #art.learn #artimg,#art.learn .cap{display:none}
 #art.learn #explain{display:flex}
 body:has(#art.learn) .rule{display:none}
-#explain .ex{font-size:13.5px;line-height:1.5}#explain .ex b{font-size:14px}
+#explain .ex{font-size:15px;line-height:1.5}#explain .ex b{font-size:15.5px}
 #artimg{flex:1;min-height:0;border-radius:10px;overflow:hidden}
 #artimg svg{display:block;width:100%;height:100%}
 .cap{text-align:center;font-size:16px;font-weight:700;opacity:.9}
@@ -213,15 +213,15 @@ function suggestFor(b,p){
   for(const it of list.slice(0,3)){
     const me=analyze(b,it.r,it.c,p),op=analyze(b,it.r,it.c,q);let t,e;
     if(me.five){t='連成五子，取勝';e='下這裡你就能連成五子。';}
-    else if(op.five){t='必須先擋';e='對手已有四子連線，不擋就會輸。';}
-    else if(me.o4){t='製造活四';e='兩端都能成五，對手擋不住。';}
-    else if(me.c4>=2||(me.c4&&me.o3)||me.o3>=2){t='形成雙重威脅';e='四三或雙活三，對手很難同時防守。';}
-    else if(dbl(op)){t='搶佔關鍵點';e='不佔的話，對手下這裡會形成雙重威脅。';}
-    else if(me.c4){t='形成衝四';e='只差一子就五連，逼對手立刻回應。';}
-    else if(me.o3){t='形成活三';e='兩端開放的三連，下一步可變活四。';}
+    else if(op.five){t='必須先擋';e='對手已四連，不擋就輸。';}
+    else if(me.o4){t='製造活四';e='兩端都能成五，擋不住。';}
+    else if(me.c4>=2||(me.c4&&me.o3)||me.o3>=2){t='形成雙重威脅';e='四三或雙活三，難以防守。';}
+    else if(dbl(op)){t='搶佔關鍵點';e='對手下這裡會形成雙重威脅。';}
+    else if(me.c4){t='形成衝四';e='只差一子就五連，逼對手回應。';}
+    else if(me.o3){t='形成活三';e='兩端開放，下一步可變活四。';}
     else if(op.c4||op.o3){t='封堵對手連線';e='先擋住對手的連線。';}
-    else if(me.o2){t='發展活二';e='連接自己的棋子，為活三打基礎。';}
-    else{t='穩健布局';e='靠近中央與雙方棋子，保持彈性。';}
+    else if(me.o2){t='發展活二';e='連接己方棋子，打好基礎。';}
+    else{t='穩健布局';e='靠近中央，保持彈性。';}
     out.push([it.r,it.c,t,e]);
   }
   return out;
