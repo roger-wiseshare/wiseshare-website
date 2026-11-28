@@ -86,10 +86,11 @@ button:disabled{opacity:.4;cursor:not-allowed}
 @media(orientation:portrait) and (pointer:coarse) and (max-width:560px){
   html,body{overscroll-behavior:none}
   :root{--bs:min(calc(100vw - 12px),calc(100dvh - 290px))}
-  #app{padding:6px}
-  header{margin-bottom:6px}h1{display:none}
+  html,body{height:100%;overflow:hidden}
+  #app{padding:0 6px;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly}
+  #stage{display:contents}
+  header{margin:0;width:100%}h1{display:none}
   #hdrBtns{display:flex;gap:6px;width:100%}#hdrBtns button{flex:1;padding:9px 2px;font-size:15px;white-space:nowrap}
-  #stage{gap:8px;align-items:center}
   #learn{display:none}
   #right{width:var(--bs);height:auto;transform:none!important}
   #art{display:none!important}
@@ -98,10 +99,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
   .pl{font-size:15px;padding:5px 8px}.dot{width:20px;height:20px}.pl em{font-size:13px}
   .row label{font-size:13px}.row select{font-size:15px;padding:6px}
   .stat{font-size:13px}.rule{display:none}
-}
-@media(orientation:portrait) and (pointer:coarse) and (max-width:560px) and (min-height:860px){
-  #cv{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%)}
-  #right{position:fixed;left:50%;top:calc(50% + var(--bs)/2 + 14px);transform:translateX(-50%)!important}
 }
 </style>
 </head>
