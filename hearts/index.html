@@ -371,11 +371,39 @@ function next(){
   later(()=>playCard(G.turn,aiChoose(G.turn)),650);
 }
 
+
+/* ===== 音效（Web Audio 合成，無外部檔案）===== */
+let AC=null;
+function actx(){try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;AC=new C();}if(AC.state==='suspended')AC.resume();return AC;}catch(e){return null;}}
+function noiseBuf(a,sec){const n=Math.floor(a.sampleRate*sec),b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);let l=0;for(let i=0;i<n;i++){l=(l+.02*(Math.random()*2-1))/1.02;d[i]=l*3.5;}return b;}
+function sndGong(){
+  const a=actx();if(!a)return;const t=a.currentTime,m=a.createGain();m.gain.value=.5;m.connect(a.destination);
+  [[98,1],[147,.7],[196,.55],[261,.4],[342,.3],[463,.2],[611,.12]].forEach(([f,v],i)=>{
+    const o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.setValueAtTime(f*1.02,t);o.frequency.exponentialRampToValueAtTime(f,t+.6);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v*.5,t+.01);g.gain.exponentialRampToValueAtTime(.0008,t+3.2-i*.25);
+    o.connect(g).connect(m);o.start(t);o.stop(t+3.3);});
+  const n=a.createBufferSource();n.buffer=noiseBuf(a,.3);const f=a.createBiquadFilter();f.type='bandpass';f.frequency.value=900;const g=a.createGain();
+  g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);n.connect(f).connect(g).connect(m);n.start(t);
+}
+function sndThunder(){
+  const a=actx();if(!a)return;const t=a.currentTime,m=a.createGain();m.gain.value=.9;m.connect(a.destination);
+  const n=a.createBufferSource();n.buffer=noiseBuf(a,3.6);
+  const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(1800,t);lp.frequency.exponentialRampToValueAtTime(140,t+2.8);
+  const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(1,t+.02);g.gain.exponentialRampToValueAtTime(.25,t+.35);
+  for(let k=0;k<5;k++){const x=t+.5+k*.45+Math.random()*.2;g.gain.linearRampToValueAtTime(.2+Math.random()*.5,x);g.gain.linearRampToValueAtTime(.12,x+.25);}
+  g.gain.exponentialRampToValueAtTime(.001,t+3.5);
+  n.connect(lp).connect(g).connect(m);n.start(t);
+  const o=a.createOscillator(),og=a.createGain();o.type='sine';o.frequency.setValueAtTime(70,t);o.frequency.exponentialRampToValueAtTime(32,t+1.6);
+  og.gain.setValueAtTime(.7,t);og.gain.exponentialRampToValueAtTime(.001,t+1.8);o.connect(og).connect(m);o.start(t);o.stop(t+1.9);
+}
 function playCard(p,c){
   const h=G.hands[p];h.splice(h.findIndex(x=>x.id===c.id),1);
   if(G.trick.length>0&&c.s!==G.trick[0].card.s)G.void[p][G.trick[0].card.s]=true;
   G.fresh=c.id;
-  G.trick.push({p,card:c});G.played.add(c.id);if(c.s==='H')G.broken=true;
+  G.trick.push({p,card:c});G.played.add(c.id);
+  if(c.s==='H'&&!G.broken)sndGong();
+  if(isQ(c))sndThunder();
+  if(c.s==='H')G.broken=true;
   G.hint=null;G.note='';G.turn=(p+1)%4;
   if(G.trick.length===4){G.msg='本墩結束，結算中…';render();later(resolveTrick,1100);}
   else{render();next();}
@@ -384,6 +412,21 @@ function playCard(p,c){
 function resolveTrick(){
   const ls=G.trick[0].card.s;let w=G.trick[0];
   for(const t of G.trick)if(t.card.s===ls&&t.card.r>w.card.r)w=t;
+  if(G.swept!=='done'){
+    G.swept='run';
+    const sl=[...document.querySelectorAll('#trick .slot')];
+    const tgt=sl.find(e=>e.classList.contains('p'+w.p));
+    if(tgt){
+      const tr=tgt.getBoundingClientRect(),tx=tr.left+tr.width/2,ty=tr.top+tr.height/2;
+      sl.forEach(e=>{const r=e.getBoundingClientRect();
+        e.style.transition='translate .6s cubic-bezier(.5,0,.8,.4),scale .6s ease-in,opacity .6s ease-in .1s';
+        e.style.translate=`${tx-(r.left+r.width/2)}px ${ty-(r.top+r.height/2)}px`;
+        e.style.scale='.55';e.style.opacity='0';});
+      G.msg=`${NAMES[w.p]}收牌…`;
+      later(()=>{G.swept='done';resolveTrick();},720);return;
+    }
+  }
+  G.swept=false;
   const pt=G.trick.reduce((a,t)=>a+pts(t.card),0);
   G.taken[w.p].push(...G.trick.map(t=>t.card));G.firstTrick=false;G.trick=[];G.turn=w.p;
   G.note=`${NAMES[w.p]}吃下上一墩${pt?`（${pt} 分）`:'（0 分）'}。`;
