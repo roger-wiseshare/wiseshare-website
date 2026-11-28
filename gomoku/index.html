@@ -99,6 +99,10 @@ button:disabled{opacity:.4;cursor:not-allowed}
   .row label{font-size:13px}.row select{font-size:15px;padding:6px}
   .stat{font-size:13px}.rule{display:none}
 }
+@media(orientation:portrait) and (pointer:coarse) and (max-width:560px) and (min-height:860px){
+  #cv{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%)}
+  #right{position:fixed;left:50%;top:calc(50% + var(--bs)/2 + 14px);transform:translateX(-50%)!important}
+}
 </style>
 </head>
 <body>
